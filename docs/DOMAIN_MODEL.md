@@ -408,14 +408,23 @@ score ≥ 36 → P1 Critical   |   ≥ 18 → P2 High   |   ≥ 8 → P3 Medium 
 - The rationale string is stored with the result for transparency, and the algorithm is documented in the report
   as the spec requires.
 
-### Assignment **[MVP: 2 strategies; we build 4]**
+### Assignment **[MVP: 2 strategies; we build 5]**
 
 | Strategy | Picks |
 |---|---|
 | `SkillBasedStrategy` | Highest proficiency in the incident's category |
-| `LoadBasedStrategy` | Fewest active incidents relative to capacity |
+| `LoadBasedStrategy` | Lowest workload *relative to capacity* (1 of 2 is busier than 2 of 8) |
+| `ExperienceBasedStrategy` | Most past fixes on the same service, then years of experience |
 | `RoundRobinStrategy` | Next available technician in rotation (fairness) |
-| `SmartCompositeStrategy` | **Weighted combination** of skill, load, experience with this service and priority: a *strategy made of strategies* (the Composite pattern) |
+| `SmartCompositeStrategy` | **Weighted combination** of skill (40 %), load (30 %) and experience (30 %), with experience counting 1.5× more for P1/P2: a *strategy made of strategies* (the Composite pattern) |
+
+- **Template Method:** `ScoringAssignmentStrategy.rank()` is `final` and fixes the steps (filter ineligible →
+  score → sort → break ties by workload, then name). Subclasses supply only `evaluate()` and optionally
+  `isEligible()`, so no strategy can skip the availability check. **[PLUS]**
+- **Facts from history are passed in** (`AssignmentCandidate`: active incidents, past fixes on this service), so
+  strategies are pure logic with no database access, which makes them easy to test.
+- **`StrategyRegistry<T>`** is one generic class that holds the available priority calculators *and* the
+  assignment strategies, and which one is active. Switching is a single admin action. **[PLUS]**
 
 - Strategies **rank** rather than just pick, returning `TechnicianScore`s **with reasons** ("Skill 5/5 in Database,
   2 of 6 slots used, resolved 14 Payment incidents"). The UI shows the top 3 recommendations and the reasoning
@@ -610,7 +619,7 @@ classDiagram
 
 ## 12. Design patterns summary
 
-The spec requires two. We use **ten**, each solving a real problem in this system:
+The spec requires two. We use **twelve**, each solving a real problem in this system:
 
 | # | Pattern | Where | Problem it solves |
 |---|---|---|---|
@@ -624,6 +633,8 @@ The spec requires two. We use **ten**, each solving a real problem in this syste
 | 8 | **Composite** | `SmartCompositeStrategy` | A strategy made of weighted strategies |
 | 9 | **Specification** | Incident search | Filters combined dynamically |
 | 10 | **Builder** | Incident creation | Many optional fields, validated in one place |
+| 11 | **Template Method** | `ScoringAssignmentStrategy.rank()` | Fixed algorithm skeleton; subclasses fill in scoring |
+| 12 | **Flyweight** | `IncidentStates` | One shared, data-free state object per status for every incident |
 
 ---
 
