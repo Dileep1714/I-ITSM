@@ -492,8 +492,18 @@ classDiagram
     SmsGateway <|.. SimulatedSmsAdapter
 ```
 
-- **Observer:** domain operations publish an `IncidentEvent`. **Three independent listeners** react: notifications,
-  audit and the live dashboard (WebSocket). The incident code knows none of them. **[MVP]**
+- **Observer:** every `Incident` operation *records* an `IncidentChange` ("Assigned to Ravi Kumar", with the old
+  and new status). After each use case the service pulls the changes and publishes them as `IncidentEvent`s.
+  **Independent listeners** react: `AuditTrailListener`, `NotificationDispatcher`, `SlaViolationRecorder` (and
+  later the live dashboard). The incident code knows none of them, and stays free of infrastructure. **[MVP]**
+- **The actor is recorded truthfully:** what a user does is attributed to them; what the system decides
+  (automatic classification and assignment, SLA warnings, escalation, auto-verify) is attributed to "System".
+  Nobody is notified of their own actions. **[PLUS]**
+- **Transactions:** the audit entry and the in-app notification are written in the *same* transaction as the
+  change (all or nothing); email and SMS are sent only *after* it commits, so nobody is told about a change that
+  was rolled back, and a mail-server failure never breaks incident handling. **[PLUS]**
+- **Staff-only events** (internal notes, SLA signals, escalations) are hidden from the reporter's history and
+  notifications. **[PLUS]**
 - **Factory:** `NotificationChannelFactory` returns the right channels for a user, respecting their
   preferences. **[MVP]**
 - **Adapter:** `SmtpEmailAdapter` wraps Spring's `JavaMailSender`; `SimulatedSmsAdapter` logs messages and stores
@@ -511,9 +521,13 @@ listener for *every* event, so the history is complete without each feature reme
 
 ## 8. SLA monitoring and escalation: Chain of Responsibility
 
-- **`SlaMonitor`** runs every minute (`@Scheduled`) over open incidents **[MVP]**:
-  - at the warning threshold (default 75 % of the time elapsed), publishes `SlaWarning`
-  - past a deadline, marks it breached, records the violation and publishes `SlaBreached`
+- **`SlaMonitorService`** runs every minute (`@Scheduled`) over open incidents, each in its own short
+  transaction so one bad incident never stops the others **[MVP]**:
+  - at the warning threshold (default 75 % of the time elapsed), raises `SLA_WARNING`
+  - past a deadline, raises `SLA_BREACHED`; `SlaViolationRecorder` stores a permanent `SlaViolation`
+  - each signal is raised **exactly once** (flags in `SlaTracker`), however often the monitor runs
+  - also retries automatic assignment for incidents nobody could take, and auto-verifies after 72 hours
+  - an admin can run a cycle on demand (`POST /api/admin/sla-monitor/run`), handy for the demo
 - **The SLA clock pauses while ON_HOLD.** Waiting for the user does not count against the technician, as in real
   ITSM tools. **[PLUS]**
 - **Escalation chain** for unacknowledged critical incidents **[PLUS]**:
@@ -536,6 +550,16 @@ classDiagram
 
   Each handler either deals with the incident or passes it up: Technician → Team Lead → System Admin → IT Manager.
   Adding a level means adding one handler.
+
+  | Step | Handler | Condition (P1/P2 only unless stated) |
+  |---|---|---|
+  | → Team Lead | `TeamLeadEscalation` | Warning threshold reached: unacknowledged near the response deadline, or resolution at risk |
+  | → System Admin | `SystemAdminEscalation` | A deadline actually breached |
+  | → IT Manager | `ItManagerEscalation` | **P1** still unresolved at 150 % of its resolution target |
+
+  A handler acts only when the incident is exactly one level below it, so escalation climbs **one step at a
+  time** and never skips a level. It hands the incident to the best available person at the new level (or, if
+  nobody is available, still escalates and notifies everyone at that level and the administrators).
 
 ---
 

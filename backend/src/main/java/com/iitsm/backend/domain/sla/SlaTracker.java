@@ -6,6 +6,8 @@ import jakarta.persistence.Embeddable;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.EnumSet;
+import java.util.Set;
 
 /**
  * Tracks one incident's progress against its SLA: deadlines, response and resolution times, and pauses.
@@ -54,7 +56,55 @@ public class SlaTracker {
     @Column(name = "sla_paused_seconds", nullable = false)
     private long pausedSeconds;
 
+    // Remember which signals were already raised, so each warning/breach is reported exactly once.
+    @Column(name = "sla_response_warned", nullable = false)
+    private boolean responseWarned;
+
+    @Column(name = "sla_resolution_warned", nullable = false)
+    private boolean resolutionWarned;
+
+    @Column(name = "sla_response_breach_recorded", nullable = false)
+    private boolean responseBreachRecorded;
+
+    @Column(name = "sla_resolution_breach_recorded", nullable = false)
+    private boolean resolutionBreachRecorded;
+
     public SlaTracker() {
+    }
+
+    /**
+     * Checks the deadlines and returns the thresholds crossed <em>since the last check</em>. Calling it every
+     * minute (the SLA monitor) and after every user action is safe: a warning or breach is returned only once.
+     */
+    public Set<SlaSignal> evaluate(Instant now) {
+        Set<SlaSignal> signals = EnumSet.noneOf(SlaSignal.class);
+        if (!isStarted()) {
+            return signals;
+        }
+        // Response target
+        if (isResponseBreached(now)) {
+            if (!responseBreachRecorded) {
+                responseBreachRecorded = true;
+                responseWarned = true; // a breach supersedes a pending warning
+                signals.add(SlaSignal.RESPONSE_BREACHED);
+            }
+        } else if (respondedAt == null && !responseWarned && responseElapsedFraction(now) >= getWarningThreshold()) {
+            responseWarned = true;
+            signals.add(SlaSignal.RESPONSE_AT_RISK);
+        }
+        // Resolution target
+        if (isResolutionBreached(now)) {
+            if (!resolutionBreachRecorded) {
+                resolutionBreachRecorded = true;
+                resolutionWarned = true;
+                signals.add(SlaSignal.RESOLUTION_BREACHED);
+            }
+        } else if (resolvedAt == null && !isPaused() && !resolutionWarned
+                && resolutionElapsedFraction(now) >= getWarningThreshold()) {
+            resolutionWarned = true;
+            signals.add(SlaSignal.RESOLUTION_AT_RISK);
+        }
+        return signals;
     }
 
     // ----- lifecycle ---------------------------------------------------------------------------------------------
@@ -185,8 +235,8 @@ public class SlaTracker {
         if (isPaused()) {
             return SlaStatus.PAUSED;
         }
-        boolean responseAtRisk = respondedAt == null && responseElapsedFraction(now) >= warningThreshold;
-        boolean resolutionAtRisk = resolutionElapsedFraction(now) >= warningThreshold;
+        boolean responseAtRisk = respondedAt == null && responseElapsedFraction(now) >= getWarningThreshold();
+        boolean resolutionAtRisk = resolutionElapsedFraction(now) >= getWarningThreshold();
         return responseAtRisk || resolutionAtRisk ? SlaStatus.AT_RISK : SlaStatus.ON_TRACK;
     }
 
@@ -194,6 +244,10 @@ public class SlaTracker {
 
     public Long getPolicyId() {
         return policyId;
+    }
+
+    public double getWarningThreshold() {
+        return warningThreshold != null ? warningThreshold : SlaPolicy.DEFAULT_WARNING_THRESHOLD;
     }
 
     public Instant getStartedAt() {

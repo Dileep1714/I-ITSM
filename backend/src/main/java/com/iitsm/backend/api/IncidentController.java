@@ -2,6 +2,7 @@ package com.iitsm.backend.api;
 
 import com.iitsm.backend.api.dto.IncidentDtos.AcceptRequest;
 import com.iitsm.backend.api.dto.IncidentDtos.AssignRequest;
+import com.iitsm.backend.api.dto.IncidentDtos.AuditEntryView;
 import com.iitsm.backend.api.dto.IncidentDtos.ClassifyRequest;
 import com.iitsm.backend.api.dto.IncidentDtos.IncidentDetail;
 import com.iitsm.backend.api.dto.IncidentDtos.IncidentSummary;
@@ -59,6 +60,12 @@ public class IncidentController {
     @GetMapping("/{id}")
     public IncidentDetail get(@PathVariable Long id) {
         return incidents.get(id);
+    }
+
+    /** Full audit trail of the incident (employees see only the entries meant for them). */
+    @GetMapping("/{id}/history")
+    public List<AuditEntryView> history(@PathVariable Long id) {
+        return incidents.history(id);
     }
 
     @PostMapping("/{id}/classify")

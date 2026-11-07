@@ -10,10 +10,12 @@ import com.iitsm.backend.common.exception.WorkloadExceededException;
 import com.iitsm.backend.domain.catalog.Category;
 import com.iitsm.backend.domain.catalog.ItService;
 import com.iitsm.backend.domain.sla.SlaPolicy;
+import com.iitsm.backend.domain.sla.SlaSignal;
 import com.iitsm.backend.domain.sla.SlaStatus;
 import com.iitsm.backend.domain.sla.SlaTracker;
 import com.iitsm.backend.domain.user.Employee;
 import com.iitsm.backend.domain.user.Role;
+import com.iitsm.backend.domain.user.SupportLevel;
 import com.iitsm.backend.domain.user.Technician;
 import com.iitsm.backend.domain.user.User;
 import jakarta.persistence.CascadeType;
@@ -31,6 +33,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
 
 import java.time.Duration;
@@ -163,9 +166,21 @@ public class Incident {
     @Column(name = "closed_at")
     private Instant closedAt;
 
+    /** Highest support level this incident has been escalated to; {@code null} if never escalated. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "escalation_level", length = 20)
+    private SupportLevel escalationLevel;
+
+    @Column(name = "last_escalated_at")
+    private Instant lastEscalatedAt;
+
     /** Optimistic locking: if two people save the same incident at once, the second save fails safely. */
     @Version
     private long version;
+
+    /** Changes recorded since the last {@link #pullChanges()}. Not stored: they become events and audit entries. */
+    @Transient
+    private final List<IncidentChange> changes = new ArrayList<>();
 
     /** Required by JPA; not for application code. */
     protected Incident() {
@@ -187,6 +202,8 @@ public class Incident {
         this.updatedAt = createdAt;
         this.status = IncidentStatus.NEW;
         this.sla = new SlaTracker();
+        changes.add(new IncidentChange(IncidentEventType.CREATED, null, IncidentStatus.NEW,
+                "Reported by " + reporter.getFullName() + " on " + service.getName() + ": " + title, true, createdAt));
     }
 
     /** Builder pattern: many fields, several optional; all validated together in one place on {@link Builder#build}. */
@@ -284,9 +301,14 @@ public class Incident {
         }
         Validate.requireNonNull(newPriority, "Priority");
         requireMatchingPolicy(newPriority, slaPolicy);
+        PriorityLevel previous = priority.getLevel();
         this.priority = newPriority;
         sla().retarget(slaPolicy);
         touch(now);
+        if (previous != newPriority.getLevel()) {
+            record(IncidentEventType.PRIORITY_CHANGED, status, "Priority changed from " + previous + " to "
+                    + newPriority.getLevel() + " (" + newPriority.getRationale() + ")", true, now);
+        }
     }
 
     /** Impact, urgency and the number of affected users can be corrected while the incident is open. */
@@ -296,6 +318,8 @@ public class Incident {
         this.urgency = Validate.requireNonNull(newUrgency, "Urgency");
         this.affectedUsers = Validate.requireRange(newAffectedUsers, 1, MAX_AFFECTED_USERS, "Affected users");
         touch(now);
+        record(IncidentEventType.DETAILS_UPDATED, status, "Assessment updated: impact " + impact + ", urgency "
+                + urgency + ", " + affectedUsers + " users affected", true, now);
     }
 
     /** The reporter can correct the title and description until a technician has accepted the incident. */
@@ -307,6 +331,7 @@ public class Incident {
         this.title = Validate.requireText(newTitle, "Title", MAX_TITLE_LENGTH);
         this.description = requireDescription(newDescription);
         touch(now);
+        record(IncidentEventType.DETAILS_UPDATED, status, "Title and description edited by the reporter", true, now);
     }
 
     /**
@@ -329,6 +354,8 @@ public class Incident {
         InvestigationNote note = new InvestigationNote(author, text, internal, now);
         notes.add(note);
         touch(now);
+        record(IncidentEventType.NOTE_ADDED, status, (internal ? "Internal note" : "Comment") + " added by "
+                + author.getFullName(), !internal, now);
         return note;
     }
 
@@ -347,7 +374,9 @@ public class Incident {
         this.category = newCategory;
         this.priority = newPriority;
         sla().start(slaPolicy, createdAt);
-        moveTo(IncidentStatus.CLASSIFIED, now);
+        transition(IncidentStatus.CLASSIFIED, now, IncidentEventType.CLASSIFIED,
+                "Classified as " + newCategory.getName() + ", priority " + newPriority.getLevel() + " "
+                        + newPriority.getLevel().label() + " (" + newPriority.getRationale() + ")", true);
     }
 
     void applyAssignment(Technician technician, int technicianActiveIncidents, Instant now) {
@@ -362,26 +391,36 @@ public class Incident {
         if (!technician.hasCapacity(technicianActiveIncidents)) {
             throw new WorkloadExceededException(technician.getFullName(), technician.getMaxActiveIncidents());
         }
+        Technician previous = this.assignee;
         this.assignee = technician;
-        moveTo(IncidentStatus.ASSIGNED, now);
+        if (previous == null) {
+            transition(IncidentStatus.ASSIGNED, now, IncidentEventType.ASSIGNED,
+                    "Assigned to " + technician.getFullName(), true);
+        } else {
+            transition(IncidentStatus.ASSIGNED, now, IncidentEventType.REASSIGNED,
+                    "Reassigned from " + previous.getFullName() + " to " + technician.getFullName(), true);
+        }
     }
 
     void applyAcknowledgement(Technician by, Instant now) {
         requireAssignee(by, "acknowledge");
         sla().recordResponse(now);
-        moveTo(IncidentStatus.ACKNOWLEDGED, now);
+        transition(IncidentStatus.ACKNOWLEDGED, now, IncidentEventType.ACKNOWLEDGED,
+                by.getFullName() + " acknowledged the incident", true);
     }
 
     void applyStartWork(Technician by, Instant now) {
         requireAssignee(by, "start work on");
-        moveTo(IncidentStatus.IN_PROGRESS, now);
+        transition(IncidentStatus.IN_PROGRESS, now, IncidentEventType.WORK_STARTED,
+                by.getFullName() + " started investigating", true);
     }
 
     void applyInfoRequest(Technician by, String question, Instant now) {
         requireAssignee(by, "request information on");
         infoRequests.add(new InfoRequest(by, question, now));
         sla().pause(now);
-        moveTo(IncidentStatus.ON_HOLD, now);
+        transition(IncidentStatus.ON_HOLD, now, IncidentEventType.INFO_REQUESTED,
+                by.getFullName() + " asked: " + question, true);
     }
 
     void applyInfoProvided(Employee by, String answer, Instant now) {
@@ -390,20 +429,23 @@ public class Incident {
                 new BusinessRuleException("NO_OPEN_INFO_REQUEST", "There is no open question to answer"));
         openRequest.answer(answer, now);
         sla().resume(now);
-        moveTo(IncidentStatus.IN_PROGRESS, now);
+        transition(IncidentStatus.IN_PROGRESS, now, IncidentEventType.INFO_PROVIDED,
+                by.getFullName() + " answered: " + answer, true);
     }
 
     void applyResolution(Technician by, String summary, String rootCause, ResolutionCode code, Instant now) {
         requireAssignee(by, "resolve");
         this.resolution = new Resolution(summary, rootCause, code, by, now);
         sla().recordResolution(now);
-        moveTo(IncidentStatus.RESOLVED, now);
+        transition(IncidentStatus.RESOLVED, now, IncidentEventType.RESOLVED,
+                "Resolved by " + by.getFullName() + " (" + code + "): " + summary, true);
     }
 
     void applyAcceptance(Employee by, int rating, String comment, Instant now) {
         requireReporter(by, "accept the resolution of");
         this.feedback = Feedback.accepted(rating, comment, now);
-        moveTo(IncidentStatus.VERIFIED, now);
+        transition(IncidentStatus.VERIFIED, now, IncidentEventType.RESOLUTION_ACCEPTED,
+                by.getFullName() + " confirmed the fix (rating " + rating + "/5)", true);
     }
 
     void applyRejection(Employee by, String reason, Instant now) {
@@ -412,28 +454,106 @@ public class Incident {
         notes.add(new InvestigationNote(by, "Resolution rejected: " + reason, false, now));
         this.resolution = null;
         sla().reopen();
-        moveTo(IncidentStatus.IN_PROGRESS, now);
+        transition(IncidentStatus.IN_PROGRESS, now, IncidentEventType.RESOLUTION_REJECTED,
+                by.getFullName() + " rejected the fix and reopened the incident: " + reason, true);
     }
 
     void applyAutoVerification(Instant now) {
-        Instant eligibleAt = resolution.getResolvedAt().plus(AUTO_VERIFY_AFTER);
-        if (now.isBefore(eligibleAt)) {
+        if (!isAutoVerifiable(now)) {
             throw new BusinessRuleException("AUTO_VERIFY_TOO_EARLY",
                     "Incident can be auto-verified only after " + AUTO_VERIFY_AFTER.toHours() + " hours");
         }
-        moveTo(IncidentStatus.VERIFIED, now);
+        transition(IncidentStatus.VERIFIED, now, IncidentEventType.AUTO_VERIFIED,
+                "Verified automatically: no response from the reporter within " + AUTO_VERIFY_AFTER.toHours()
+                        + " hours", true);
     }
 
     void applyClose(Instant now) {
         this.closedAt = Validate.requireNonNull(now, "Closing time");
-        moveTo(IncidentStatus.CLOSED, now);
+        transition(IncidentStatus.CLOSED, now, IncidentEventType.CLOSED, "Incident closed", true);
     }
 
     void applyCancellation(String reason, Incident original, Instant now) {
         this.cancellationReason = Validate.requireText(reason, "Cancellation reason", MAX_REASON_LENGTH);
         this.duplicateOf = original;
         this.closedAt = Validate.requireNonNull(now, "Cancellation time");
-        moveTo(IncidentStatus.CANCELLED, now);
+        transition(IncidentStatus.CANCELLED, now, IncidentEventType.CANCELLED, "Cancelled: " + reason, true);
+    }
+
+    // =============================================================================================================
+    // SLA evaluation and escalation (driven by the SLA monitor and after every user action)
+    // =============================================================================================================
+
+    /**
+     * Checks the SLA deadlines and records a warning or breach the first time each threshold is crossed.
+     *
+     * @return the thresholds crossed by this call (empty if none, or if they were already reported)
+     */
+    public Set<SlaSignal> evaluateSla(Instant now) {
+        if (status == IncidentStatus.CANCELLED) {
+            return Set.of();
+        }
+        Set<SlaSignal> signals = sla().evaluate(now);
+        for (SlaSignal signal : signals) {
+            String description = signal.isBreach()
+                    ? signal.target() + " SLA breached (deadline " + deadlineFor(signal, now) + ")"
+                    : signal.target() + " deadline approaching: " + Math.round(sla().getWarningThreshold() * 100)
+                    + "% of the time used (due " + deadlineFor(signal, now) + ")";
+            record(signal.isBreach() ? IncidentEventType.SLA_BREACHED : IncidentEventType.SLA_WARNING,
+                    status, description, false, now);
+        }
+        return signals;
+    }
+
+    private Instant deadlineFor(SlaSignal signal, Instant now) {
+        return signal.target().equals("Response") ? sla().responseDue() : sla().resolutionDue(now);
+    }
+
+    /**
+     * Raises the incident to {@code level} and, if a technician at that level is available, hands it over to them.
+     * Called by the escalation chain; never lowers the level.
+     *
+     * @param newAssignee technician to take over, or {@code null} to escalate (notify the level) without reassigning
+     */
+    public void escalate(SupportLevel level, Technician newAssignee, int newAssigneeActiveIncidents, String reason,
+                         Instant now) {
+        Validate.requireNonNull(level, "Escalation level");
+        requireOpen("ESCALATE");
+        if (!level.isAtLeast(effectiveEscalationLevel()) || level == effectiveEscalationLevel()) {
+            throw new BusinessRuleException("ESCALATION_NOT_HIGHER",
+                    "Incident is already at " + effectiveEscalationLevel().displayName() + " level");
+        }
+        this.escalationLevel = level;
+        this.lastEscalatedAt = now;
+        touch(now);
+        record(IncidentEventType.ESCALATED, status, "Escalated to " + level.displayName() + ": " + reason
+                + (newAssignee != null && !newAssignee.equals(assignee) ? "; handing over to "
+                + newAssignee.getFullName() : ""), false, now);
+        if (newAssignee != null && !newAssignee.equals(assignee)
+                && allowedOperations().contains(IncidentOperation.ASSIGN)) {
+            assign(newAssignee, newAssigneeActiveIncidents, now);
+        }
+    }
+
+    /** The support level currently responsible: the escalation level, or the assignee's own level if higher. */
+    public SupportLevel effectiveEscalationLevel() {
+        SupportLevel fromAssignee = assignee != null ? assignee.getSupportLevel() : SupportLevel.L1_TECHNICIAN;
+        if (escalationLevel == null) {
+            return fromAssignee;
+        }
+        return escalationLevel.isAtLeast(fromAssignee) ? escalationLevel : fromAssignee;
+    }
+
+    public boolean isAutoVerifiable(Instant now) {
+        return status == IncidentStatus.RESOLVED && resolution != null
+                && !now.isBefore(resolution.getResolvedAt().plus(AUTO_VERIFY_AFTER));
+    }
+
+    /** Returns and clears the changes recorded since the last call. */
+    public List<IncidentChange> pullChanges() {
+        List<IncidentChange> pulled = List.copyOf(changes);
+        changes.clear();
+        return pulled;
     }
 
     // =============================================================================================================
@@ -444,9 +564,19 @@ public class Incident {
         return IncidentStates.of(status);
     }
 
-    private void moveTo(IncidentStatus newStatus, Instant now) {
+    /** Changes the status and records the change, in one step, so no transition can go unrecorded. */
+    private void transition(IncidentStatus newStatus, Instant now, IncidentEventType type, String description,
+                            boolean visibleToReporter) {
+        IncidentStatus previous = this.status;
         this.status = newStatus;
         touch(now);
+        changes.add(new IncidentChange(type, previous, newStatus, description, visibleToReporter, now));
+    }
+
+    /** Records a change that does not move the lifecycle (status stays the same). */
+    private void record(IncidentEventType type, IncidentStatus currentStatus, String description,
+                        boolean visibleToReporter, Instant now) {
+        changes.add(new IncidentChange(type, currentStatus, currentStatus, description, visibleToReporter, now));
     }
 
     private void touch(Instant now) {
@@ -628,6 +758,14 @@ public class Incident {
 
     public Instant getClosedAt() {
         return closedAt;
+    }
+
+    public SupportLevel getEscalationLevel() {
+        return escalationLevel;
+    }
+
+    public Instant getLastEscalatedAt() {
+        return lastEscalatedAt;
     }
 
     // ----- identity ----------------------------------------------------------------------------------------------

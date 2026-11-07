@@ -1,6 +1,7 @@
 package com.iitsm.backend.service;
 
 import com.iitsm.backend.api.dto.IncidentDtos.AcceptRequest;
+import com.iitsm.backend.api.dto.IncidentDtos.AuditEntryView;
 import com.iitsm.backend.api.dto.IncidentDtos.IncidentDetail;
 import com.iitsm.backend.api.dto.IncidentDtos.IncidentSummary;
 import com.iitsm.backend.api.dto.IncidentDtos.NoteRequest;
@@ -12,20 +13,18 @@ import com.iitsm.backend.common.exception.AuthorizationException;
 import com.iitsm.backend.common.exception.NotFoundException;
 import com.iitsm.backend.common.exception.ServiceNotFoundException;
 import com.iitsm.backend.common.strategy.StrategyRegistry;
-import com.iitsm.backend.config.ItsmProperties;
 import com.iitsm.backend.domain.assignment.AssignmentStrategy;
 import com.iitsm.backend.domain.assignment.TechnicianScore;
 import com.iitsm.backend.domain.catalog.Category;
 import com.iitsm.backend.domain.catalog.ItService;
 import com.iitsm.backend.domain.incident.Incident;
 import com.iitsm.backend.domain.incident.IncidentOperation;
-import com.iitsm.backend.domain.incident.Priority;
-import com.iitsm.backend.domain.priority.PriorityCalculator;
-import com.iitsm.backend.domain.priority.PriorityFactors;
-import com.iitsm.backend.domain.sla.SlaPolicy;
 import com.iitsm.backend.domain.user.Employee;
+import com.iitsm.backend.domain.user.Role;
 import com.iitsm.backend.domain.user.Technician;
 import com.iitsm.backend.domain.user.User;
+import com.iitsm.backend.event.IncidentEventPublisher;
+import com.iitsm.backend.repository.AuditEntryRepository;
 import com.iitsm.backend.repository.CategoryRepository;
 import com.iitsm.backend.repository.IncidentRepository;
 import com.iitsm.backend.repository.ItServiceRepository;
@@ -44,9 +43,10 @@ import java.util.List;
 /**
  * Use cases for incidents: report, classify, assign, work, resolve, verify, close.
  *
- * <p>Each method follows the same shape: identify the user → load the incident → check role and visibility →
- * call the domain method (which enforces the lifecycle and ownership rules) → return the updated view. The
- * whole method runs in one database transaction, so either every change is saved or none is.
+ * <p>Each state-changing method follows the same shape (see {@link #perform}): identify the user → check role
+ * and visibility → call the domain method (which enforces lifecycle and ownership rules) → check the SLA →
+ * publish what changed → return the updated view. All in one transaction, so the change, its audit entries and
+ * its in-app notifications are saved together or not at all.
  *
  * <p>The service holds <b>no incident rules</b> of its own; it coordinates. The rules live in {@link Incident}.
  */
@@ -58,36 +58,34 @@ public class IncidentService {
     private final ItServiceRepository services;
     private final CategoryRepository categories;
     private final TechnicianRepository technicians;
-    private final SlaPolicyResolver slaPolicies;
+    private final AuditEntryRepository auditEntries;
     private final AssignmentCandidateService candidates;
-    private final StrategyRegistry<PriorityCalculator> priorityCalculators;
     private final StrategyRegistry<AssignmentStrategy> assignmentStrategies;
+    private final IncidentRouter router;
     private final IncidentPermissions permissions;
     private final IncidentMapper mapper;
+    private final IncidentEventPublisher events;
     private final CurrentUserService currentUser;
-    private final ItsmProperties.Assignment assignmentSettings;
     private final Clock clock;
 
     public IncidentService(IncidentRepository incidents, ItServiceRepository services,
                            CategoryRepository categories, TechnicianRepository technicians,
-                           SlaPolicyResolver slaPolicies, AssignmentCandidateService candidates,
-                           StrategyRegistry<PriorityCalculator> priorityCalculators,
-                           StrategyRegistry<AssignmentStrategy> assignmentStrategies,
-                           IncidentPermissions permissions, IncidentMapper mapper,
-                           CurrentUserService currentUser, ItsmProperties.Assignment assignmentSettings,
-                           Clock clock) {
+                           AuditEntryRepository auditEntries, AssignmentCandidateService candidates,
+                           StrategyRegistry<AssignmentStrategy> assignmentStrategies, IncidentRouter router,
+                           IncidentPermissions permissions, IncidentMapper mapper, IncidentEventPublisher events,
+                           CurrentUserService currentUser, Clock clock) {
         this.incidents = incidents;
         this.services = services;
         this.categories = categories;
         this.technicians = technicians;
-        this.slaPolicies = slaPolicies;
+        this.auditEntries = auditEntries;
         this.candidates = candidates;
-        this.priorityCalculators = priorityCalculators;
         this.assignmentStrategies = assignmentStrategies;
+        this.router = router;
         this.permissions = permissions;
         this.mapper = mapper;
+        this.events = events;
         this.currentUser = currentUser;
-        this.assignmentSettings = assignmentSettings;
         this.clock = clock;
     }
 
@@ -95,7 +93,7 @@ public class IncidentService {
 
     /**
      * An employee reports an incident. If they chose a category, the system immediately calculates the priority,
-     * applies the SLA and (if enabled) assigns the best technician: steps 1–8 of the spec's problem scenario.
+     * applies the SLA and (if enabled) assigns the best technician: steps 1–9 of the spec's problem scenario.
      */
     public IncidentDetail report(ReportIncidentRequest request) {
         User user = currentUser.require();
@@ -118,35 +116,23 @@ public class IncidentService {
                 .reportedAt(now)
                 .build();
         incidents.save(incident);
+        events.publishChanges(incident, user);  // "reported by Asha"
 
         if (request.categoryId() != null) {
-            classifyAndRoute(incident, loadCategory(request.categoryId()), now);
+            router.classifyAndRoute(incident, loadCategory(request.categoryId()), now);
         }
+        incident.evaluateSla(now);
+        // Classification and assignment were decided automatically, so they are the system's actions: the
+        // history says so truthfully, and the reporter is notified about them (people are never notified of
+        // their own actions).
+        events.publishChanges(incident, null);
         return mapper.toDetail(incident, user);
     }
 
     /** Support staff classify an incident that was reported without a category. */
     public IncidentDetail classify(Long incidentId, Long categoryId) {
         return perform(incidentId, IncidentOperation.CLASSIFY,
-                (incident, user, now) -> classifyAndRoute(incident, loadCategory(categoryId), now));
-    }
-
-    private void classifyAndRoute(Incident incident, Category category, Instant now) {
-        Priority priority = priorityCalculators.active().calculate(PriorityFactors.of(incident));
-        SlaPolicy policy = slaPolicies.resolve(priority.getLevel(), incident.getService());
-        incident.classify(category, priority, policy, now);
-        if (assignmentSettings.autoAssign()) {
-            autoAssign(incident, now);
-        }
-    }
-
-    /** Assign the active strategy's top recommendation. If nobody is eligible, the incident waits (and escalates). */
-    private void autoAssign(Incident incident, Instant now) {
-        AssignmentStrategy strategy = assignmentStrategies.active();
-        strategy.recommend(incident, candidates.candidatesFor(incident)).ifPresent(best -> {
-            incident.assign(best.technician(), best.candidate().activeIncidents(), now);
-            strategy.onAssigned(best.technician());
-        });
+                (incident, user, now) -> router.classifyAndRoute(incident, loadCategory(categoryId), now));
     }
 
     // ----- assignment --------------------------------------------------------------------------------------------
@@ -227,14 +213,28 @@ public class IncidentService {
         return perform(incidentId, IncidentOperation.CANCEL, (incident, user, now) -> incident.cancel(reason, now));
     }
 
-    // ----- notes & reading ---------------------------------------------------------------------------------------
+    // ----- notes, history & reading ------------------------------------------------------------------------------
 
     public IncidentDetail addNote(Long incidentId, NoteRequest request) {
         User user = currentUser.require();
         Incident incident = load(incidentId);
         permissions.requireVisible(user, incident);
         incident.addNote(user, request.text(), request.internal(), clock.instant());
+        events.publishChanges(incident, user);
         return mapper.toDetail(incident, user);
+    }
+
+    /** The incident's audit trail, oldest first. Employees see only entries meant for them. */
+    @Transactional(readOnly = true)
+    public List<AuditEntryView> history(Long incidentId) {
+        User user = currentUser.require();
+        Incident incident = load(incidentId);
+        permissions.requireVisible(user, incident);
+        boolean employee = user.getRole() == Role.EMPLOYEE;
+        return auditEntries.findByIncidentIdOrderByOccurredAtAscIdAsc(incidentId).stream()
+                .filter(entry -> !employee || entry.isVisibleToReporter())
+                .map(AuditEntryView::of)
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -271,7 +271,10 @@ public class IncidentService {
         permissions.require(user, operation);
         Incident incident = load(incidentId);
         permissions.requireVisible(user, incident);
-        action.apply(incident, user, clock.instant());
+        Instant now = clock.instant();
+        action.apply(incident, user, now);
+        incident.evaluateSla(now);      // e.g. a late acknowledgement is recorded as a breach immediately
+        events.publishChanges(incident, user);
         return mapper.toDetail(incident, user);
     }
 

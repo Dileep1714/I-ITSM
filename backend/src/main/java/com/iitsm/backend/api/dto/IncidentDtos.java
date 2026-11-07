@@ -1,7 +1,9 @@
 package com.iitsm.backend.api.dto;
 
+import com.iitsm.backend.domain.audit.AuditEntry;
 import com.iitsm.backend.domain.incident.Impact;
 import com.iitsm.backend.domain.incident.Incident;
+import com.iitsm.backend.domain.incident.IncidentEventType;
 import com.iitsm.backend.domain.incident.IncidentOperation;
 import com.iitsm.backend.domain.incident.IncidentStatus;
 import com.iitsm.backend.domain.incident.PriorityLevel;
@@ -112,6 +114,18 @@ public final class IncidentDtos {
     }
 
     public record FeedbackView(boolean accepted, Integer rating, String comment, Instant givenAt) {
+    }
+
+    /** One line of an incident's history. */
+    public record AuditEntryView(Long id, String incidentNumber, IncidentEventType action,
+                                 IncidentStatus previousStatus, IncidentStatus newStatus, String description,
+                                 String actorName, Instant occurredAt) {
+
+        public static AuditEntryView of(AuditEntry entry) {
+            return new AuditEntryView(entry.getId(), entry.getIncidentNumber(), entry.getAction(),
+                    entry.getPreviousStatus(), entry.getNewStatus(), entry.getDescription(),
+                    entry.getActorName(), entry.getOccurredAt());
+        }
     }
 
     /** A ranked technician suggestion with the reasons behind it. */

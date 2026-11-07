@@ -102,6 +102,14 @@ All endpoints are under `/api` and, except login and registration, need the head
 | `POST …/provide-info`, `/accept`, `/reject` | reporter | Answer questions; verify the fix |
 | `POST …/close`, `/cancel` | staff (reporter may cancel) | Finish the incident |
 | `POST …/notes` | reporter, staff | Add a comment (internal notes: staff only) |
+| `GET /api/incidents/{id}/history` | reporter, staff | Audit trail (reporters see only entries meant for them) |
+| `GET /api/notifications` (`?unreadOnly=true`) | logged in | My in-app notifications, newest first |
+| `GET /api/notifications/unread-count` | logged in | Number for the bell icon |
+| `POST /api/notifications/{id}/read`, `/read-all` | logged in | Mark as read |
+| `GET /api/admin/audit` | admin | Global audit log |
+| `GET /api/admin/sla-violations` | admin | Every missed SLA deadline |
+| `GET /api/admin/outbox` | admin | Recent emails and SMS (simulated unless SMTP is configured) |
+| `POST /api/admin/sla-monitor/run` | admin | Run the SLA monitor now (it also runs every minute) |
 | `GET /api/admin/strategies` | admin | Available priority and assignment strategies |
 | `PUT /api/admin/strategies/assignment`, `/priority` | admin | Switch strategy at runtime |
 

@@ -24,6 +24,10 @@ public interface IncidentRepository extends JpaRepository<Incident, Long>, JpaSp
     @Query(value = "SELECT nextval('incident_number_seq')", nativeQuery = true)
     long nextIncidentNumber();
 
+    /** Ids only: the SLA monitor then processes each incident in its own short transaction. */
+    @Query("SELECT i.id FROM Incident i WHERE i.status IN :statuses ORDER BY i.id")
+    List<Long> findIdsByStatusIn(@Param("statuses") Collection<IncidentStatus> statuses);
+
     Page<Incident> findByReporter(Employee reporter, Pageable pageable);
 
     Page<Incident> findByAssignee(Technician assignee, Pageable pageable);
