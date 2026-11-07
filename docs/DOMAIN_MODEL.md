@@ -45,7 +45,8 @@ classDiagram
         -boolean active
         -Instant createdAt
         +getRole() Role*
-        +changePassword(old, new)
+        +passwordMatches(raw, PasswordHasher) boolean
+        +changePassword(current, new, PasswordHasher)
         +deactivate()
     }
     class Employee {
@@ -99,8 +100,10 @@ classDiagram
   promotion to change an object's class, which is a classic misuse of inheritance. **[MVP]**
 - **`Skill` is a value object with a proficiency level (1–5)**, not just a list of category names. This lets
   assignment prefer the *best* match rather than *any* match. **[PLUS]**
-- **Encapsulation.** `passwordHash` has no getter that leaves the security layer; skills are exposed as an
-  unmodifiable set; `hasCapacity()` keeps the workload rule inside `Technician`. **[MVP]**
+- **Encapsulation.** `passwordHash` has **no getter at all**: callers ask `passwordMatches()` instead. Skills are
+  exposed as an unmodifiable list; `hasCapacity()` keeps the workload rule inside `Technician`. **[MVP]**
+- **Dependency inversion.** `User` hashes passwords through a `PasswordHasher` interface defined in the domain; the
+  security layer supplies BCrypt. The domain never depends on Spring Security, and tests use a simple fake. **[PLUS]**
 
 ---
 
@@ -576,9 +579,14 @@ classDiagram
     BusinessRuleException <|-- WorkloadExceededException
     BusinessRuleException <|-- DuplicateIncidentException
     BusinessRuleException <|-- SlaPolicyMissingException
+    ItsmException <|-- InvalidCredentialsException
     ItsmException <|-- AuthorizationException
-    ItsmException <|-- ValidationException
+    ItsmException <|-- InvalidInputException
 ```
+
+`InvalidInputException` is deliberately not called `ValidationException`, to avoid clashing with
+`jakarta.validation.ValidationException`. `InvalidCredentialsException` (401, not logged in) is kept separate from
+`AuthorizationException` (403, logged in but not allowed).
 
 - **A hierarchy, not a flat list.** Callers can catch a whole family (`NotFoundException`) or one specific
   case. **[PLUS]**
