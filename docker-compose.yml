@@ -1,0 +1,33 @@
+# Local development services for I-ITSM.
+#
+#   docker compose up -d      start (in the background)
+#   docker compose ps         check status ("healthy" = ready)
+#   docker compose logs -f    follow logs
+#   docker compose down       stop (data is kept)
+#   docker compose down -v    stop AND delete all data (fresh start)
+#
+# The password below is for local development only. Override it with a .env file
+# (POSTGRES_PASSWORD=...) or environment variables in any shared or deployed environment.
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: iitsm-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: iitsm
+      POSTGRES_USER: iitsm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-iitsm_dev_password}
+      TZ: UTC
+    ports:
+      - "5432:5432"
+    volumes:
+      - iitsm-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iitsm -d iitsm"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  iitsm-pgdata:
