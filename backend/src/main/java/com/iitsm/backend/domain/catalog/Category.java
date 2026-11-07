@@ -129,7 +129,8 @@ public class Category {
         if (this == other) {
             return true;
         }
-        return other instanceof Category that && id != null && id.equals(that.id);
+        // getId(), not the field: Hibernate may hand us a lazy proxy whose fields are not loaded
+        return other instanceof Category that && getId() != null && getId().equals(that.getId());
     }
 
     @Override

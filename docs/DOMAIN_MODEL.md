@@ -123,19 +123,21 @@ classDiagram
         -IncidentState state
         -Instant createdAt
         -long version
-        +classify(Category, PriorityCalculator)
-        +assignTo(Technician)
-        +acknowledge(Technician)
-        +startWork()
-        +putOnHold(reason)
-        +resume()
-        +resolve(Resolution)
-        +verify(Feedback)
-        +reopen(reason)
-        +close()
-        +cancel(reason)
-        +addNote(InvestigationNote)
-        +linkTo(Incident parent)
+        +classify(Category, Priority, SlaPolicy, now)
+        +assign(Technician, activeCount, now)
+        +acknowledge(Technician, now)
+        +startWork(Technician, now)
+        +requestInfo(Technician, question, now)
+        +provideInfo(Employee, answer, now)
+        +resolve(Technician, summary, rootCause, code, now)
+        +acceptResolution(Employee, rating, comment, now)
+        +rejectResolution(Employee, reason, now)
+        +autoVerify(now)
+        +close(now)
+        +cancel(reason, now)
+        +markDuplicateOf(Incident, now)
+        +addNote(User, text, internal, now)
+        +allowedOperations() Set~IncidentOperation~
     }
     class Priority {
         <<value object>>
@@ -281,6 +283,8 @@ stateDiagram-v2
     ASSIGNED --> ASSIGNED : reassign / escalate
     ASSIGNED --> ACKNOWLEDGED : acknowledge
     ACKNOWLEDGED --> IN_PROGRESS : start work
+    ACKNOWLEDGED --> ASSIGNED : reassign
+    IN_PROGRESS --> ASSIGNED : reassign / hand over
     IN_PROGRESS --> ON_HOLD : request info from user
     ON_HOLD --> IN_PROGRESS : user responds
     IN_PROGRESS --> RESOLVED : resolve
@@ -308,7 +312,7 @@ classDiagram
         +reopen(Incident, reason)
         +close(Incident)
         +cancel(Incident, reason)
-        +allowedTransitions() Set~IncidentStatus~
+        +allowedOperations() Set~IncidentOperation~
     }
     class AbstractIncidentState {
         <<abstract>>
@@ -332,10 +336,17 @@ classDiagram
 - **`AbstractIncidentState` rejects every operation by default**, throwing `InvalidStateTransitionException`.
   Each concrete state **overrides only what it allows**. NEW → CLOSED is therefore impossible by construction, not by
   an `if` that someone could forget. **[MVP]**
-- **`allowedTransitions()`** is exposed through the API, so the frontend shows only the buttons that are valid right
-  now. One rule, used in both places. **[PLUS]**
-- **Persistence:** the database stores the status as text; a small `IncidentStateFactory` maps it back to the state
-  object when an incident is loaded.
+- **`allowedOperations()`** is exposed through the API, so the frontend shows only the buttons that are valid right
+  now. One rule, used in both places. A unit test (`IncidentStatesTest`) checks, for every state and every
+  operation, that this list agrees with what the state's methods actually do. **[PLUS]**
+- **States decide *whether*, the incident decides *who* and *what*.** A state only allows or rejects an operation;
+  `Incident` then checks the actor (only the assignee may acknowledge, only the reporter may accept) and applies
+  the change, including the SLA clock. The `apply…` methods are package-private, so the lifecycle cannot be
+  bypassed from outside.
+- **Persistence:** the database stores the status as text; `IncidentStates` maps it back to the state object.
+  States hold no data, so one shared instance per status serves every incident (the **Flyweight** idea).
+- **Time is passed in** (`Instant now`) instead of read from the system clock, which makes every rule testable to
+  the second (for example the 72-hour auto-verify boundary).
 - **Beyond the spec's lifecycle:** `ON_HOLD` (pauses the SLA clock while waiting for the user), **reopen** when the
   reporter rejects a resolution, **auto-verify** after 72 hours of no response, and `CANCELLED` for duplicates.
   These mirror how real ITSM tools (ServiceNow, Jira Service Management) behave. **[PLUS]**

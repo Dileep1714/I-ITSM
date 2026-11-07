@@ -181,7 +181,8 @@ public abstract class User {
         if (this == other) {
             return true;
         }
-        return other instanceof User that && id != null && id.equals(that.id);
+        // getId(), not the field: Hibernate may hand us a lazy proxy whose fields are not loaded
+        return other instanceof User that && getId() != null && getId().equals(that.getId());
     }
 
     @Override
