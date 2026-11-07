@@ -3,10 +3,6 @@ package com.iitsm.backend.repository;
 import com.iitsm.backend.domain.catalog.ItService;
 import com.iitsm.backend.domain.incident.Incident;
 import com.iitsm.backend.domain.incident.IncidentStatus;
-import com.iitsm.backend.domain.user.Employee;
-import com.iitsm.backend.domain.user.Technician;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -27,10 +23,6 @@ public interface IncidentRepository extends JpaRepository<Incident, Long>, JpaSp
     /** Ids only: the SLA monitor then processes each incident in its own short transaction. */
     @Query("SELECT i.id FROM Incident i WHERE i.status IN :statuses ORDER BY i.id")
     List<Long> findIdsByStatusIn(@Param("statuses") Collection<IncidentStatus> statuses);
-
-    Page<Incident> findByReporter(Employee reporter, Pageable pageable);
-
-    Page<Incident> findByAssignee(Technician assignee, Pageable pageable);
 
     /** Current workload per technician: incidents assigned to them in one of the given (active) statuses. */
     @Query("""

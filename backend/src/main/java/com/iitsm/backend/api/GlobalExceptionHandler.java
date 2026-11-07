@@ -48,7 +48,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException e,
                                                           HttpServletRequest request) {
         List<ErrorResponse.FieldError> fields = e.getBindingResult().getFieldErrors().stream()
-                .map(error -> new ErrorResponse.FieldError(error.getField(), error.getDefaultMessage()))
+                // A binding failure (e.g. "status=FOO" in a query string) carries Spring's technical conversion
+                // message; replace it with a readable one.
+                .map(error -> new ErrorResponse.FieldError(error.getField(),
+                        error.isBindingFailure() ? "has an invalid value" : error.getDefaultMessage()))
                 .toList();
         return respond(400, "INVALID_INPUT", "Some fields are missing or invalid", request, fields);
     }

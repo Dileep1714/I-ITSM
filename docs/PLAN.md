@@ -81,7 +81,7 @@
 - [ ] Full history per incident: timestamp, user, action, incident ID, old state, new state, description
 
 ### Search & reporting
-- [ ] At least 5 filters: ID, date range, status, priority, category, service, technician, SLA status
+- [x] At least 5 filters: ID, date range, status, priority, category, service, technician, SLA status
 - [ ] Reports: incident overview, technician workload, service analysis
 
 ### Intelligent features (at least 2)

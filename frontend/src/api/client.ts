@@ -6,6 +6,7 @@ import type {
   FieldError,
   Impact,
   IncidentDetail,
+  IncidentSearch,
   IncidentSummary,
   NotificationView,
   Outbox,
@@ -124,6 +125,18 @@ export const api = {
   incidents: {
     list: (page = 0, size = 20, sort = 'createdAt,desc') =>
       get<PageResponse<IncidentSummary>>(`/incidents${query({ page, size, sort })}`),
+    search: (filters: IncidentSearch, page = 0, size = 20, sort = 'createdAt,desc') =>
+      get<PageResponse<IncidentSummary>>(
+        `/incidents${query({
+          ...filters,
+          status: filters.status?.join(','),
+          priority: filters.priority?.join(','),
+          sla: filters.sla?.join(','),
+          page,
+          size,
+          sort,
+        })}`,
+      ),
     get: (id: number) => get<IncidentDetail>(`/incidents/${id}`),
     history: (id: number) => get<AuditEntryView[]>(`/incidents/${id}/history`),
     report: (req: ReportIncidentRequest) => post<IncidentDetail>('/incidents', req),

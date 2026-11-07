@@ -141,6 +141,23 @@ export interface ReportIncidentRequest {
   affectedUsers?: number;
 }
 
+/** Filters for GET /api/incidents; all optional, combined with AND. */
+export interface IncidentSearch {
+  q?: string;
+  status?: IncidentStatus[];
+  priority?: PriorityLevel[];
+  sla?: SlaStatus[];
+  serviceId?: number;
+  categoryId?: number;
+  assigneeId?: number;
+  unassigned?: boolean;
+  /** ISO instants; createdTo is exclusive. */
+  createdFrom?: string;
+  createdTo?: string;
+  /** MINE (default): reported by / assigned to me. ALL: everything I may see. */
+  scope?: 'MINE' | 'ALL';
+}
+
 export interface IncidentSummary {
   id: number;
   number: string;

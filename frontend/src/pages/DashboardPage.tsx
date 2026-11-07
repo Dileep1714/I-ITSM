@@ -4,21 +4,22 @@ import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
+import type { IncidentSearch } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import { IncidentTable } from '../components/IncidentTable';
 import { QueryState } from '../components/QueryState';
 import { OPEN_STATUSES } from '../lib/format';
 
-function StatCard({ label, value, icon, color }: { label: string; value: number; icon: ReactNode; color: string }) {
+function StatCard({ label, value, icon, color, to }: { label: string; value: number | undefined; icon: ReactNode; color: string; to: string }) {
   return (
-    <Paper withBorder p="md" radius="md">
+    <Paper withBorder p="md" radius="md" component={Link} to={to} style={{ textDecoration: 'none', color: 'inherit' }}>
       <Group justify="space-between">
         <div>
           <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
             {label}
           </Text>
           <Text fw={700} fz={28}>
-            {value}
+            {value ?? '–'}
           </Text>
         </div>
         <ThemeIcon color={color} variant="light" size={44} radius="md">
@@ -29,19 +30,42 @@ function StatCard({ label, value, icon, color }: { label: string; value: number;
   );
 }
 
+/** Counts one search on the server (only the total is used). */
+function useCount(filters: IncidentSearch) {
+  return useQuery({
+    queryKey: ['incidents', 'count', filters],
+    queryFn: () => api.incidents.search(filters, 0, 1),
+    select: (page) => page.totalElements,
+  }).data;
+}
+
 export function DashboardPage() {
   const { user } = useAuth();
-  const incidents = useQuery({ queryKey: ['incidents', 'list'], queryFn: () => api.incidents.list(0, 200) });
-  const all = incidents.data?.content ?? [];
+  const isEmployee = user?.role === 'EMPLOYEE';
 
-  const open = all.filter((i) => OPEN_STATUSES.includes(i.status));
-  const atRisk = open.filter((i) => i.slaStatus === 'AT_RISK');
-  const breached = open.filter((i) => i.slaStatus === 'BREACHED');
-  const critical = open.filter((i) => i.priority === 'P1' || i.priority === 'P2');
-  const awaitingMe =
-    user?.role === 'EMPLOYEE' ? all.filter((i) => i.status === 'RESOLVED' || i.status === 'ON_HOLD') : [];
+  // Technicians see their own queue, administrators everything, employees their reports (enforced by the server).
+  const scope = user?.role === 'ADMINISTRATOR' ? 'ALL' : 'MINE';
+  const open: IncidentSearch = { status: OPEN_STATUSES, scope };
+  const counts = {
+    open: useCount(open),
+    critical: useCount({ ...open, priority: ['P1', 'P2'] }),
+    atRisk: useCount({ ...open, sla: ['AT_RISK'] }),
+    breached: useCount({ ...open, sla: ['BREACHED'] }),
+  };
+  const link = (extra: Record<string, string>) =>
+    `/incidents?${new URLSearchParams({ status: OPEN_STATUSES.join(','), scope, ...extra })}`;
 
-  const attention = [...breached, ...atRisk, ...critical.filter((i) => !atRisk.includes(i) && !breached.includes(i))];
+  const recent = useQuery({ queryKey: ['incidents', 'recent'], queryFn: () => api.incidents.list(0, 8) });
+  const attention = useQuery({
+    queryKey: ['incidents', 'attention', scope],
+    queryFn: () => api.incidents.search({ ...open, sla: ['BREACHED', 'AT_RISK'] }, 0, 10, 'priority.level,asc'),
+    enabled: !isEmployee,
+  });
+  const awaiting = useQuery({
+    queryKey: ['incidents', 'awaiting-me'],
+    queryFn: () => api.incidents.search({ status: ['RESOLVED', 'ON_HOLD'] }, 0, 10),
+    enabled: isEmployee,
+  });
 
   return (
     <Stack>
@@ -49,55 +73,57 @@ export function DashboardPage() {
         <div>
           <Title order={2}>Welcome, {user?.fullName.split(' ')[0]}</Title>
           <Text c="dimmed" size="sm">
-            {user?.role === 'EMPLOYEE' && 'Track the incidents you have reported.'}
+            {isEmployee && 'Track the incidents you have reported.'}
             {user?.role === 'TECHNICIAN' && 'Your queue of assigned incidents.'}
             {user?.role === 'ADMINISTRATOR' && 'Operational overview of all incidents.'}
           </Text>
         </div>
-        {user?.role === 'EMPLOYEE' && (
+        {isEmployee && (
           <Button component={Link} to="/incidents/new" leftSection={<IconPlus size={16} />}>
             Report incident
           </Button>
         )}
       </Group>
 
-      <QueryState query={incidents}>
-        <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }}>
-          <StatCard label="Open" value={open.length} color="blue" icon={<IconTicket size={24} />} />
-          <StatCard label="High priority (P1/P2)" value={critical.length} color="orange" icon={<IconFlame size={24} />} />
-          <StatCard label="SLA at risk" value={atRisk.length} color="yellow" icon={<IconClockExclamation size={24} />} />
-          <StatCard label="SLA breached" value={breached.length} color="red" icon={<IconAlertTriangle size={24} />} />
-        </SimpleGrid>
+      <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }}>
+        <StatCard label="Open" value={counts.open} color="blue" icon={<IconTicket size={24} />} to={link({})} />
+        <StatCard label="High priority (P1/P2)" value={counts.critical} color="orange" icon={<IconFlame size={24} />} to={link({ priority: 'P1,P2' })} />
+        <StatCard label="SLA at risk" value={counts.atRisk} color="yellow" icon={<IconClockExclamation size={24} />} to={link({ sla: 'AT_RISK' })} />
+        <StatCard label="SLA breached" value={counts.breached} color="red" icon={<IconAlertTriangle size={24} />} to={link({ sla: 'BREACHED' })} />
+      </SimpleGrid>
 
-        {awaitingMe.length > 0 && (
-          <Paper withBorder radius="md" p="md">
-            <Group gap="xs" mb="sm">
-              <IconCircleCheck size={18} />
-              <Text fw={600}>Waiting for your response</Text>
-            </Group>
-            <IncidentTable incidents={awaitingMe} />
-          </Paper>
-        )}
-
-        {user?.role !== 'EMPLOYEE' && (
-          <Paper withBorder radius="md" p="md">
-            <Text fw={600} mb="sm">
-              Needs attention
-            </Text>
-            <IncidentTable incidents={attention.slice(0, 10)} emptyText="Nothing urgent right now" />
-          </Paper>
-        )}
-
+      {isEmployee && (awaiting.data?.content.length ?? 0) > 0 && (
         <Paper withBorder radius="md" p="md">
-          <Group justify="space-between" mb="sm">
-            <Text fw={600}>Recent incidents</Text>
-            <Anchor component={Link} to="/incidents" size="sm">
-              View all
-            </Anchor>
+          <Group gap="xs" mb="sm">
+            <IconCircleCheck size={18} />
+            <Text fw={600}>Waiting for your response</Text>
           </Group>
-          <IncidentTable incidents={all.slice(0, 8)} emptyText="No incidents yet" />
+          <IncidentTable incidents={awaiting.data?.content ?? []} />
         </Paper>
-      </QueryState>
+      )}
+
+      {!isEmployee && (
+        <Paper withBorder radius="md" p="md">
+          <Text fw={600} mb="sm">
+            Needs attention
+          </Text>
+          <QueryState query={attention}>
+            <IncidentTable incidents={attention.data?.content ?? []} emptyText="No SLA at risk or breached right now" />
+          </QueryState>
+        </Paper>
+      )}
+
+      <Paper withBorder radius="md" p="md">
+        <Group justify="space-between" mb="sm">
+          <Text fw={600}>Recent incidents</Text>
+          <Anchor component={Link} to="/incidents" size="sm">
+            View all
+          </Anchor>
+        </Group>
+        <QueryState query={recent}>
+          <IncidentTable incidents={recent.data?.content ?? []} emptyText="No incidents yet" />
+        </QueryState>
+      </Paper>
     </Stack>
   );
 }

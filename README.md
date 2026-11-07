@@ -109,7 +109,7 @@ All endpoints are under `/api` and, except login and registration, need the head
 | `GET /api/catalog/services`, `/categories` | logged in | Reference data for forms |
 | `POST /api/priority/preview` | logged in | Priority an incident would get, with explanation |
 | `POST /api/incidents` | employee | Report an incident (auto-prioritized and auto-assigned if a category is given) |
-| `GET /api/incidents` | logged in | My incidents (reported / assigned / all for admins), paged |
+| `GET /api/incidents` | logged in | Search, paged. No filters: my incidents (reported / assigned / all for admins). Filters: `q` (number, title, description), `status`, `priority`, `sla` (comma-separated), `serviceId`, `categoryId`, `assigneeId`, `unassigned=true`, `createdFrom`/`createdTo` (ISO instants), `scope=ALL` (staff: every incident). Employees only ever see their own |
 | `GET /api/incidents/{id}` | reporter, staff | Full detail, including `allowedOperations` for the current user |
 | `POST /api/incidents/{id}/classify` | staff | Set category; calculates priority and SLA |
 | `GET /api/incidents/{id}/recommendations` | team lead+, admin | Ranked technicians with reasons |

@@ -12,6 +12,7 @@ import com.iitsm.backend.api.dto.IncidentDtos.ReportIncidentRequest;
 import com.iitsm.backend.api.dto.IncidentDtos.ResolveRequest;
 import com.iitsm.backend.api.dto.IncidentDtos.TextRequest;
 import com.iitsm.backend.api.dto.PageResponse;
+import com.iitsm.backend.service.IncidentSearchCriteria;
 import com.iitsm.backend.service.IncidentService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -51,10 +52,15 @@ public class IncidentController {
         return incidents.report(request);
     }
 
+    /**
+     * Search and list incidents, newest first. With no parameters: "my incidents" (reported by me / assigned to
+     * me; everything for administrators). Filters: see {@link IncidentSearchCriteria}.
+     */
     @GetMapping
-    public PageResponse<IncidentSummary> listMine(
+    public PageResponse<IncidentSummary> search(
+            IncidentSearchCriteria criteria,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return incidents.listMine(pageable);
+        return incidents.search(criteria, pageable);
     }
 
     @GetMapping("/{id}")

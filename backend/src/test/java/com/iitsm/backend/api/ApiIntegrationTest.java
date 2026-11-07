@@ -279,6 +279,95 @@ class ApiIntegrationTest {
         getAs(login("vikram@test.com"), "/api/incidents").andExpect(jsonPath("$.totalElements").value(0));
     }
 
+    // ----- search ------------------------------------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("Search")
+    class Search {
+
+        private String asha;
+
+        /** A classified P1 outage (auto-assigned to Ravi) and an unclassified printer problem (no SLA yet). */
+        @BeforeEach
+        void reportTwo() throws Exception {
+            asha = login("asha@test.com");
+            reportPaymentOutage(asha);
+            postAs(asha, "/api/incidents", """
+                    {"title": "Printer shows 100%% toner but prints blank",
+                     "description": "The second-floor printer prints empty pages.",
+                     "serviceId": %d, "impact": "LOW", "urgency": "LOW"}
+                    """.formatted(paymentId)).andExpect(status().isCreated());
+        }
+
+        /** Passed as a parameter so MockMvc encodes spaces and % correctly. */
+        private ResultActions searchText(String text) throws Exception {
+            return mvc.perform(get("/api/incidents").param("q", text).header("Authorization", asha));
+        }
+
+        @Test
+        @DisplayName("Text matches number, title or description, ignoring case; % is taken literally")
+        void text() throws Exception {
+            searchText("PAYMENT").andExpect(jsonPath("$.totalElements").value(1));
+            searchText("empty pages").andExpect(jsonPath("$.totalElements").value(1));
+            searchText("INC-").andExpect(jsonPath("$.totalElements").value(2));
+            searchText("100%").andExpect(jsonPath("$.totalElements").value(1));
+            searchText("%").andExpect(jsonPath("$.totalElements").value(1));
+        }
+
+        @Test
+        @DisplayName("Status, priority and SLA filters accept several values")
+        void multiValueFilters() throws Exception {
+            getAs(asha, "/api/incidents?status=NEW").andExpect(jsonPath("$.content[0].title", startsWith("Printer")))
+                    .andExpect(jsonPath("$.totalElements").value(1));
+            getAs(asha, "/api/incidents?status=NEW,ASSIGNED").andExpect(jsonPath("$.totalElements").value(2));
+            getAs(asha, "/api/incidents?priority=P1").andExpect(jsonPath("$.totalElements").value(1));
+            getAs(asha, "/api/incidents?priority=P3,P4").andExpect(jsonPath("$.totalElements").value(0));
+            getAs(asha, "/api/incidents?sla=NOT_STARTED").andExpect(jsonPath("$.content[0].slaStatus").value("NOT_STARTED"))
+                    .andExpect(jsonPath("$.totalElements").value(1));
+            getAs(asha, "/api/incidents?sla=ON_TRACK").andExpect(jsonPath("$.content[0].slaStatus").value("ON_TRACK"))
+                    .andExpect(jsonPath("$.totalElements").value(1));
+            getAs(asha, "/api/incidents?sla=BREACHED,MET").andExpect(jsonPath("$.totalElements").value(0));
+        }
+
+        @Test
+        @DisplayName("Service, category, assignee, unassigned and creation date filters")
+        void singleValueFilters() throws Exception {
+            String admin = login("admin@test.com");
+            Long raviId = users.findByEmail("ravi@test.com").orElseThrow().getId();
+            getAs(admin, "/api/incidents?serviceId=" + paymentId).andExpect(jsonPath("$.totalElements").value(2));
+            getAs(admin, "/api/incidents?categoryId=" + applicationId).andExpect(jsonPath("$.totalElements").value(1));
+            getAs(admin, "/api/incidents?assigneeId=" + raviId).andExpect(jsonPath("$.totalElements").value(1));
+            getAs(admin, "/api/incidents?unassigned=true").andExpect(jsonPath("$.totalElements").value(1));
+            getAs(admin, "/api/incidents?createdFrom=2000-01-01T00:00:00Z&createdTo=2100-01-01T00:00:00Z")
+                    .andExpect(jsonPath("$.totalElements").value(2));
+            getAs(admin, "/api/incidents?createdTo=2000-01-01T00:00:00Z").andExpect(jsonPath("$.totalElements").value(0));
+        }
+
+        @Test
+        @DisplayName("Scope ALL widens a technician's view, but never an employee's")
+        void scope() throws Exception {
+            String ravi = login("ravi@test.com");
+            getAs(ravi, "/api/incidents").andExpect(jsonPath("$.totalElements").value(1));
+            getAs(ravi, "/api/incidents?scope=ALL").andExpect(jsonPath("$.totalElements").value(2));
+            getAs(ravi, "/api/incidents?scope=ALL&unassigned=true")
+                    .andExpect(jsonPath("$.content[0].assigneeName").doesNotExist());
+            getAs(login("vikram@test.com"), "/api/incidents?scope=ALL").andExpect(jsonPath("$.totalElements").value(0));
+        }
+
+        @Test
+        @DisplayName("Invalid filters are rejected with INVALID_INPUT")
+        void invalid() throws Exception {
+            getAs(asha, "/api/incidents?status=SOLVED").andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                    .andExpect(jsonPath("$.fieldErrors[0].field").value("status"));
+            getAs(asha, "/api/incidents?createdFrom=2026-02-01T00:00:00Z&createdTo=2026-01-01T00:00:00Z")
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+            getAs(asha, "/api/incidents?assigneeId=1&unassigned=true").andExpect(status().isBadRequest());
+            searchText("x".repeat(201)).andExpect(status().isBadRequest());
+        }
+    }
+
     // ----- authorization -----------------------------------------------------------------------------------------
 
     @Nested

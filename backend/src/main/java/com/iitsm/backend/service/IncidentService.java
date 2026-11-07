@@ -27,11 +27,13 @@ import com.iitsm.backend.event.IncidentEventPublisher;
 import com.iitsm.backend.repository.AuditEntryRepository;
 import com.iitsm.backend.repository.CategoryRepository;
 import com.iitsm.backend.repository.IncidentRepository;
+import com.iitsm.backend.repository.IncidentSpecifications;
 import com.iitsm.backend.repository.ItServiceRepository;
 import com.iitsm.backend.repository.TechnicianRepository;
 import com.iitsm.backend.security.CurrentUserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -245,15 +247,22 @@ public class IncidentService {
         return mapper.toDetail(incident, user);
     }
 
-    /** "My incidents": what I reported (employee), what is assigned to me (technician), everything (admin). */
+    /**
+     * Search incidents. The scope comes first: employees only ever see what they reported; with scope MINE a
+     * technician sees what is assigned to them and an administrator sees everything; with scope ALL any support
+     * staff member sees everything. The criteria then narrow that set.
+     */
     @Transactional(readOnly = true)
-    public PageResponse<IncidentSummary> listMine(Pageable pageable) {
+    public PageResponse<IncidentSummary> search(IncidentSearchCriteria criteria, Pageable pageable) {
+        criteria.validate();
         User user = currentUser.require();
-        Page<Incident> page = switch (user) {
-            case Employee employee -> incidents.findByReporter(employee, pageable);
-            case Technician technician -> incidents.findByAssignee(technician, pageable);
-            default -> incidents.findAll(pageable);
+        Specification<Incident> visible = switch (user) {
+            case Employee employee -> IncidentSpecifications.reportedBy(employee);
+            case Technician technician when criteria.scope() == IncidentSearchCriteria.Scope.MINE ->
+                    IncidentSpecifications.assignedTo(technician);
+            default -> Specification.unrestricted();
         };
+        Page<Incident> page = incidents.findAll(visible.and(IncidentSpecifications.matching(criteria)), pageable);
         return PageResponse.of(page, mapper::toSummary);
     }
 
