@@ -23,6 +23,8 @@ services:
       - "5432:5432"
     volumes:
       - iitsm-pgdata:/var/lib/postgresql
+      # Scripts here run only when the data volume is first created (e.g. after `docker compose down -v`).
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U iitsm -d iitsm"]
       interval: 5s

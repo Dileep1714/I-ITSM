@@ -57,7 +57,8 @@ cd backend
 ```
 
 The first run downloads Maven and all libraries (a few minutes). You should see `BUILD SUCCESS`.
-The tests include integration tests that use the database, so step 3 must be done first.
+The tests include integration tests that use a separate `iitsm_test` database (created automatically with the
+container), so step 3 must be done first.
 
 ### 5. Run the backend
 
@@ -66,6 +67,43 @@ The tests include integration tests that use the database, so step 3 must be don
 ```
 
 Check it is up: http://localhost:8080/actuator/health should show `{"status":"UP"}`.
+
+On first start with an empty database, demo data is loaded automatically: 8 IT services with dependencies,
+9 categories, the spec's SLA table, and these accounts. **All use the password `Password123`** (local demo only):
+
+| Role | Accounts |
+|---|---|
+| Administrator | `admin@iitsm.example.com` |
+| Technicians | `ravi@` (L1, Network/Hardware) · `priya@` (L1, Application/Software) · `arjun@` (L1, junior) · `kavya@` (L2 Team Lead, Database/Cloud) · `farhan@` (L3 System Admin, Security) · `sunita@` (L4 IT Manager) |
+| Employees | `asha@` · `vikram@` · `neha@` |
+
+(All `@iitsm.example.com`.) Set `SEED_DEMO_DATA=false` to start with an empty system.
+
+## API overview
+
+All endpoints are under `/api` and, except login and registration, need the header
+`Authorization: Bearer <token>` from the login response. Errors always have the same JSON shape:
+`{code, message, status, path, timestamp, fieldErrors}`.
+
+| Method & path | Who | Purpose |
+|---|---|---|
+| `POST /api/auth/register` | anyone | Create an employee account; returns a token |
+| `POST /api/auth/login` | anyone | Log in; returns a token |
+| `GET /api/auth/me` | logged in | Current user |
+| `GET /api/catalog/services`, `/categories` | logged in | Reference data for forms |
+| `POST /api/priority/preview` | logged in | Priority an incident would get, with explanation |
+| `POST /api/incidents` | employee | Report an incident (auto-prioritized and auto-assigned if a category is given) |
+| `GET /api/incidents` | logged in | My incidents (reported / assigned / all for admins), paged |
+| `GET /api/incidents/{id}` | reporter, staff | Full detail, including `allowedOperations` for the current user |
+| `POST /api/incidents/{id}/classify` | staff | Set category; calculates priority and SLA |
+| `GET /api/incidents/{id}/recommendations` | team lead+, admin | Ranked technicians with reasons |
+| `POST /api/incidents/{id}/assign` | team lead+, admin | Assign or reassign |
+| `POST …/acknowledge`, `/start`, `/request-info`, `/resolve` | assigned technician | Work the incident |
+| `POST …/provide-info`, `/accept`, `/reject` | reporter | Answer questions; verify the fix |
+| `POST …/close`, `/cancel` | staff (reporter may cancel) | Finish the incident |
+| `POST …/notes` | reporter, staff | Add a comment (internal notes: staff only) |
+| `GET /api/admin/strategies` | admin | Available priority and assignment strategies |
+| `PUT /api/admin/strategies/assignment`, `/priority` | admin | Switch strategy at runtime |
 
 ## Everyday commands
 
@@ -85,6 +123,7 @@ Check it is up: http://localhost:8080/actuator/health should show `{"status":"UP
 | `Connection refused` on port 5432 when running tests | The database isn't running: `docker compose up -d` |
 | Port 5432 already in use | Another PostgreSQL is installed locally. Stop it, or change the port mapping in `docker-compose.yml` |
 | `Schema-validation: missing column…` on startup | Your database has an old schema: reset it (see above) |
+| Tests fail with `database "iitsm_test" does not exist` | Your database volume is older than the test-database script: reset it (see above), or run `docker exec iitsm-postgres psql -U iitsm -c "CREATE DATABASE iitsm_test OWNER iitsm;"` |
 | `Migration checksum mismatch` | A migration file that was already applied was edited. Never edit applied migrations; add a new `V<n>__….sql` file instead. Reset your local database to recover |
 
 ## Project structure
