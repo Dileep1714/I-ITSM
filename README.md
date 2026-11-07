@@ -14,7 +14,7 @@ auditing and intelligent automation.
 
 ## Tech stack
 
-Java 21+ · Spring Boot 4 · PostgreSQL 18 · Flyway · React + Mantine (frontend, in progress) · Docker
+Java 21+ · Spring Boot 4 · PostgreSQL 18 · Flyway · React 19 + TypeScript + Mantine (frontend) · Docker
 
 ## Getting started
 
@@ -68,6 +68,22 @@ container), so step 3 must be done first.
 
 Check it is up: http://localhost:8080/actuator/health should show `{"status":"UP"}`.
 
+### 6. Run the frontend
+
+In a second terminal, with the backend running:
+
+```bash
+cd frontend
+npm install               # first time only
+npm run dev
+```
+
+Open http://localhost:5173 and log in with a demo account below (the login page lists them and fills them in
+for you). The dev server forwards `/api` calls to the backend on port 8080.
+
+> Installed Node with **fnm**? Each new PowerShell needs `fnm env --use-on-cd | Out-String | Invoke-Expression`
+> before `node`/`npm` work. Add that line to your PowerShell profile (`notepad $PROFILE`) to make it permanent.
+
 On first start with an empty database, demo data is loaded automatically: 8 IT services with dependencies,
 9 categories, the spec's SLA table, and these accounts. **All use the password `Password123`** (local demo only):
 
@@ -120,6 +136,8 @@ All endpoints are under `/api` and, except login and registration, need the head
 | Start / stop the database | `docker compose up -d` / `docker compose down` |
 | **Reset** the database (deletes all data) | `docker compose down -v` then `docker compose up -d` |
 | Run all tests | `cd backend` then `./mvnw test` |
+| Run the frontend | `cd frontend` then `npm run dev` |
+| Type-check, lint and build the frontend | `cd frontend` then `npm run lint` and `npm run build` |
 | Get teammates' latest work | `git pull` |
 | Share your work | `git add <files>`, `git commit -m "Describe the change"`, `git push` |
 
@@ -140,6 +158,12 @@ All endpoints are under `/api` and, except login and registration, need the head
 I-ITSM/
 ├── docker-compose.yml           PostgreSQL for local development
 ├── docs/                        Plan and design documentation
+├── frontend/                    React + Vite + Mantine web app
+│   └── src/
+│       ├── api/                 Typed API client and DTO types
+│       ├── auth/                Login state and role checks
+│       ├── components/          Layout, badges, tables, notification bell
+│       └── pages/               Screens per role (incident detail, admin pages…)
 └── backend/                     Spring Boot application
     └── src/
         ├── main/java/com/iitsm/backend/
