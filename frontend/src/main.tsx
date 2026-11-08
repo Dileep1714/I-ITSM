@@ -1,5 +1,7 @@
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
+import '@mantine/charts/styles.css';
+import './viz.css';
 import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { Notifications } from '@mantine/notifications';
@@ -10,6 +12,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ApiError } from './api/client';
 import { App } from './App';
 import { AuthProvider } from './auth/AuthContext';
+import { LiveUpdatesProvider } from './realtime/LiveUpdates';
 import { theme } from './theme';
 
 const queryClient = new QueryClient({
@@ -30,7 +33,9 @@ createRoot(document.getElementById('root')!).render(
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
             <AuthProvider>
-              <App />
+              <LiveUpdatesProvider>
+                <App />
+              </LiveUpdatesProvider>
             </AuthProvider>
           </BrowserRouter>
         </QueryClientProvider>

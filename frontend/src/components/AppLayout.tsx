@@ -1,4 +1,4 @@
-import { AppShell, Badge, Burger, Group, Menu, NavLink, Text, ThemeIcon, UnstyledButton, Avatar } from '@mantine/core';
+import { AppShell, Badge, Burger, Group, Menu, NavLink, Text, ThemeIcon, Tooltip, UnstyledButton, Avatar } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
   IconAlertTriangle,
@@ -11,8 +11,14 @@ import {
   IconSettings,
   IconTicket,
   IconBell,
+  IconCategory,
+  IconChartBar,
+  IconClockCog,
+  IconUser,
+  IconUsers,
 } from '@tabler/icons-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useLiveStatus } from '../realtime/liveStatus';
 import { useAuth } from '../auth/AuthContext';
 import type { Role } from '../api/types';
 import { humanize } from '../lib/format';
@@ -30,9 +36,14 @@ const NAV: NavItem[] = [
   { label: 'Report incident', to: '/incidents/new', icon: IconPlus, roles: ['EMPLOYEE'] },
   { label: 'Incidents', to: '/incidents', icon: IconTicket, roles: ['EMPLOYEE', 'TECHNICIAN', 'ADMINISTRATOR'] },
   { label: 'Notifications', to: '/notifications', icon: IconBell, roles: ['EMPLOYEE', 'TECHNICIAN', 'ADMINISTRATOR'] },
+  { label: 'Reports', to: '/reports', icon: IconChartBar, roles: ['TECHNICIAN', 'ADMINISTRATOR'] },
+  { label: 'My profile', to: '/profile', icon: IconUser, roles: ['TECHNICIAN'] },
   { label: 'SLA violations', to: '/admin/sla-violations', icon: IconAlertTriangle, roles: ['ADMINISTRATOR'] },
   { label: 'Audit log', to: '/admin/audit', icon: IconHistory, roles: ['ADMINISTRATOR'] },
   { label: 'Outbox', to: '/admin/outbox', icon: IconMail, roles: ['ADMINISTRATOR'] },
+  { label: 'Users', to: '/admin/users', icon: IconUsers, roles: ['ADMINISTRATOR'] },
+  { label: 'Catalogue', to: '/admin/catalog', icon: IconCategory, roles: ['ADMINISTRATOR'] },
+  { label: 'SLA policies', to: '/admin/sla-policies', icon: IconClockCog, roles: ['ADMINISTRATOR'] },
   { label: 'Settings', to: '/admin/settings', icon: IconSettings, roles: ['ADMINISTRATOR'] },
 ];
 
@@ -68,6 +79,7 @@ export function AppLayout() {
             </Text>
           </Group>
           <Group gap="sm">
+            <LiveIndicator />
             <NotificationBell />
             <Menu position="bottom-end" withinPortal>
               <Menu.Target>
@@ -91,6 +103,9 @@ export function AppLayout() {
                   </Badge>
                 </Menu.Item>
                 <Menu.Divider />
+                <Menu.Item component={Link} to="/profile" leftSection={<IconUser size={14} />}>
+                  My profile
+                </Menu.Item>
                 <Menu.Item leftSection={<IconLogout size={14} />} color="red" onClick={logout}>
                   Log out
                 </Menu.Item>
@@ -119,5 +134,22 @@ export function AppLayout() {
         <Outlet />
       </AppShell.Main>
     </AppShell>
+  );
+}
+
+/** Green when real-time updates are flowing; the app still works (with manual refresh) when they are not. */
+function LiveIndicator() {
+  const status = useLiveStatus();
+  const label = status === 'live' ? 'Live' : status === 'connecting' ? 'Connecting…' : 'Offline';
+  return (
+    <Tooltip label={status === 'live' ? 'Real-time updates on' : 'Real-time updates unavailable: data refreshes when you navigate'}>
+      <Badge
+        variant="dot"
+        color={status === 'live' ? 'green' : status === 'connecting' ? 'yellow' : 'gray'}
+        visibleFrom="xs"
+      >
+        {label}
+      </Badge>
+    </Tooltip>
   );
 }

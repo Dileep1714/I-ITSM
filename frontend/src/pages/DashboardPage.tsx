@@ -1,5 +1,5 @@
-import { Anchor, Button, Group, Paper, SimpleGrid, Stack, Text, ThemeIcon, Title } from '@mantine/core';
-import { IconAlertTriangle, IconCircleCheck, IconClockExclamation, IconFlame, IconPlus, IconTicket } from '@tabler/icons-react';
+import { Alert, Anchor, Badge, Button, Group, Paper, SimpleGrid, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { IconAlertTriangle, IconCircleCheck, IconTopologyStar3, IconClockExclamation, IconFlame, IconPlus, IconTicket } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
@@ -61,6 +61,12 @@ export function DashboardPage() {
     queryFn: () => api.incidents.search({ ...open, sla: ['BREACHED', 'AT_RISK'] }, 0, 10, 'priority.level,asc'),
     enabled: !isEmployee,
   });
+  const correlations = useQuery({
+    queryKey: ['correlations'],
+    queryFn: api.intelligence.correlations,
+    enabled: !isEmployee,
+    refetchInterval: 60_000,
+  });
   const awaiting = useQuery({
     queryKey: ['incidents', 'awaiting-me'],
     queryFn: () => api.incidents.search({ status: ['RESOLVED', 'ON_HOLD'] }, 0, 10),
@@ -91,6 +97,25 @@ export function DashboardPage() {
         <StatCard label="SLA at risk" value={counts.atRisk} color="yellow" icon={<IconClockExclamation size={24} />} to={link({ sla: 'AT_RISK' })} />
         <StatCard label="SLA breached" value={counts.breached} color="red" icon={<IconAlertTriangle size={24} />} to={link({ sla: 'BREACHED' })} />
       </SimpleGrid>
+
+      {correlations.data?.map((c) => (
+        <Alert
+          key={c.rootServiceId}
+          color="orange"
+          variant="light"
+          icon={<IconTopologyStar3 size={18} />}
+          title={`Possible common cause: ${c.rootServiceName}`}
+        >
+          <Text size="sm">{c.explanation}</Text>
+          <Group gap={6} mt="xs">
+            {c.incidents.map((i) => (
+              <Badge key={i.id} component={Link} to={`/incidents/${i.id}`} variant="outline" color="orange" style={{ cursor: 'pointer' }}>
+                {i.number} · {i.serviceName}
+              </Badge>
+            ))}
+          </Group>
+        </Alert>
+      ))}
 
       {isEmployee && (awaiting.data?.content.length ?? 0) > 0 && (
         <Paper withBorder radius="md" p="md">

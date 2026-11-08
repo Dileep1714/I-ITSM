@@ -67,3 +67,11 @@ export const OPEN_STATUSES: IncidentStatus[] = [
   'IN_PROGRESS',
   'ON_HOLD',
 ];
+
+/** 42 → "42 min", 210 → "3.5 h", 3000 → "2.1 d"; null → "—". */
+export function formatMinutes(minutes: number | null | undefined): string {
+  if (minutes === null || minutes === undefined) return '—';
+  if (minutes < 60) return `${Math.round(minutes)} min`;
+  if (minutes < 60 * 24) return `${(minutes / 60).toFixed(1)} h`;
+  return `${(minutes / 60 / 24).toFixed(1)} d`;
+}

@@ -1,13 +1,13 @@
-import { Alert, Button, Card, Grid, Group, NumberInput, Paper, Select, Stack, Text, TextInput, Textarea, Title } from '@mantine/core';
+import { Alert, Anchor, Badge, Button, Card, Grid, Group, NumberInput, Paper, Select, Stack, Text, TextInput, Textarea, Title } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useDebouncedValue } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
-import { IconAlertCircle, IconBolt } from '@tabler/icons-react';
+import { IconAlertCircle, IconBolt, IconCopy, IconSparkles } from '@tabler/icons-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api/client';
+import { ApiError, api } from '../api/client';
 import type { Impact, Urgency } from '../api/types';
-import { PriorityBadge } from '../components/Badges';
+import { PriorityBadge, StatusBadge } from '../components/Badges';
 import { errorMessage, humanize } from '../lib/format';
 
 const IMPACTS: Impact[] = ['LOW', 'MEDIUM', 'HIGH', 'EXTENSIVE'];
@@ -63,8 +63,25 @@ export function ReportIncidentPage() {
     enabled: previewInput.serviceId !== null,
   });
 
+  // Intelligent features: suggest a category and spot an incident someone already reported, as the user types.
+  const { title, description } = form.values;
+  const [draft] = useDebouncedValue({ title: title.trim(), description: description.trim(), serviceId }, 500);
+  const analysis = useQuery({
+    queryKey: ['draft-analysis', draft],
+    queryFn: () =>
+      api.intelligence.analyze({
+        title: draft.title,
+        description: draft.description,
+        serviceId: draft.serviceId ? Number(draft.serviceId) : null,
+      }),
+    enabled: draft.title.length >= 4 || draft.description.length >= 10,
+    placeholderData: (previous) => previous,
+  });
+  const topSuggestion = analysis.data?.categorySuggestions[0];
+  const alreadyReported = analysis.data?.similarIncidents ?? [];
+
   const report = useMutation({
-    mutationFn: (values: FormValues) =>
+    mutationFn: ({ values, allowDuplicate }: { values: FormValues; allowDuplicate: boolean }) =>
       api.incidents.report({
         title: values.title.trim(),
         description: values.description.trim(),
@@ -73,6 +90,7 @@ export function ReportIncidentPage() {
         impact: values.impact,
         urgency: values.urgency,
         affectedUsers: Number(values.affectedUsers) || 1,
+        allowDuplicate,
       }),
     onSuccess: (incident) => {
       queryClient.invalidateQueries({ queryKey: ['incidents'] });
@@ -82,6 +100,7 @@ export function ReportIncidentPage() {
   });
 
   const selectedService = services.data?.find((s) => String(s.id) === serviceId);
+  const duplicateWarning = report.error instanceof ApiError && report.error.code === 'DUPLICATE_INCIDENT';
 
   return (
     <Stack maw={1100}>
@@ -89,9 +108,27 @@ export function ReportIncidentPage() {
       <Grid>
         <Grid.Col span={{ base: 12, md: 8 }}>
           <Paper withBorder p="lg" radius="md">
-            <form onSubmit={form.onSubmit((v) => report.mutate(v))}>
+            <form onSubmit={form.onSubmit((values) => report.mutate({ values, allowDuplicate: false }))}>
               <Stack>
-                {report.error && (
+                {duplicateWarning && (
+                  <Alert color="yellow" icon={<IconCopy size={16} />} title="Already reported?">
+                    <Text size="sm">{errorMessage(report.error)}</Text>
+                    <Group mt="sm" gap="xs">
+                      <Button size="xs" variant="default" onClick={() => navigate('/incidents')}>
+                        View my incidents
+                      </Button>
+                      <Button
+                        size="xs"
+                        color="yellow"
+                        loading={report.isPending}
+                        onClick={() => report.mutate({ values: form.getValues(), allowDuplicate: true })}
+                      >
+                        It's a different problem: submit anyway
+                      </Button>
+                    </Group>
+                  </Alert>
+                )}
+                {report.error && !duplicateWarning && (
                   <Alert color="red" icon={<IconAlertCircle size={16} />} style={{ whiteSpace: 'pre-line' }}>
                     {errorMessage(report.error)}
                   </Alert>
@@ -115,7 +152,20 @@ export function ReportIncidentPage() {
                   />
                   <Select
                     label="Category"
-                    description="Optional: speeds up assignment"
+                    description={
+                      topSuggestion && !form.values.categoryId ? (
+                        <Anchor
+                          component="button"
+                          type="button"
+                          size="xs"
+                          onClick={() => form.setFieldValue('categoryId', String(topSuggestion.categoryId))}
+                        >
+                          Suggested: {topSuggestion.name} ({Math.round(topSuggestion.confidence * 100)}%), use it
+                        </Anchor>
+                      ) : (
+                        'Optional: detected automatically if left empty'
+                      )
+                    }
                     clearable
                     data={(categories.data ?? [])
                       .filter((c) => c.active)
@@ -184,6 +234,58 @@ export function ReportIncidentPage() {
                 </Text>
               )}
             </Card>
+            {(topSuggestion || alreadyReported.length > 0) && (
+              <Card withBorder radius="md">
+                <Group gap="xs" mb="xs">
+                  <IconSparkles size={18} />
+                  <Text fw={600}>Smart assistant</Text>
+                </Group>
+                <Stack gap="sm">
+                  {analysis.data?.categorySuggestions.map((s) => (
+                    <div key={s.categoryId}>
+                      <Group gap="xs">
+                        <Text size="sm" fw={500}>
+                          {s.name}
+                        </Text>
+                        <Badge size="xs" variant="light" color={s.confidence >= 0.5 ? 'teal' : 'gray'}>
+                          {Math.round(s.confidence * 100)}% confident
+                        </Badge>
+                      </Group>
+                      <Text size="xs" c="dimmed">
+                        {s.reasons.join(' · ')}
+                      </Text>
+                    </div>
+                  ))}
+                  {alreadyReported.length > 0 && (
+                    <div>
+                      <Text size="sm" fw={500} mb={4}>
+                        Possibly already reported
+                      </Text>
+                      <Stack gap={6}>
+                        {alreadyReported.slice(0, 4).map((r) => (
+                          <Group key={r.id} gap="xs" wrap="nowrap" align="flex-start">
+                            <StatusBadge status={r.status} />
+                            <Text size="xs" style={{ flex: 1 }}>
+                              <Text span size="xs" ff="monospace">
+                                {r.number}
+                              </Text>{' '}
+                              {r.title}
+                              <Text span size="xs" c="dimmed">
+                                {' '}
+                                · {r.serviceName}
+                              </Text>
+                            </Text>
+                          </Group>
+                        ))}
+                      </Stack>
+                      <Text size="xs" c="dimmed" mt={4}>
+                        Others may have reported this already. Reporting it again is fine: support staff will link duplicates.
+                      </Text>
+                    </div>
+                  )}
+                </Stack>
+              </Card>
+            )}
             {selectedService && (
               <Card withBorder radius="md">
                 <Text fw={600}>{selectedService.name}</Text>

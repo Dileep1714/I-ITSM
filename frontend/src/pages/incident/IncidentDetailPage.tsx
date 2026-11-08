@@ -45,6 +45,7 @@ import { PriorityBadge, SlaBadge, StatusBadge } from '../../components/Badges';
 import { QueryState } from '../../components/QueryState';
 import { errorMessage, formatDateTime, fromNow, humanize } from '../../lib/format';
 import { ActionModals, type ModalOperation } from './ActionModals';
+import { RelatedIncidents } from './RelatedIncidents';
 
 interface ActionButton {
   op: IncidentOperation;
@@ -198,8 +199,8 @@ function IncidentView({
       </Paper>
 
       {i.duplicateOfNumber && (
-        <Alert color="yellow" title="Possible duplicate">
-          This incident looks like {i.duplicateOfNumber}.
+        <Alert color="yellow" title="Duplicate">
+          This incident was closed as a duplicate of {i.duplicateOfNumber}. Follow that incident for updates.
         </Alert>
       )}
       {pendingQuestion && (
@@ -207,7 +208,7 @@ function IncidentView({
           {pendingQuestion.question}
         </Alert>
       )}
-      {i.cancellationReason && (
+      {i.cancellationReason && !i.duplicateOfNumber && (
         <Alert color="gray" title="Cancelled">
           {i.cancellationReason}
         </Alert>
@@ -329,6 +330,8 @@ function IncidentView({
                 {i.closedAt && <Field label="Closed">{formatDateTime(i.closedAt)}</Field>}
               </SimpleGrid>
             </Card>
+
+            {isStaff && <RelatedIncidents incident={i} onUpdated={onUpdated} />}
 
             {i.priority && (
               <Card withBorder radius="md">

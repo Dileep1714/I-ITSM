@@ -1,0 +1,15 @@
+/*
+ * Chart colour roles (validated with the dataviz palette validator: CVD and normal-vision separation pass in both
+ * modes). Charts reference these roles, never raw hex, so light and dark values swap in one place.
+ */
+:root {
+  --viz-series-1: #2a78d6; /* blue: "created", or the single series of a chart */
+  --viz-series-2: #eb6834; /* orange: "resolved" */
+  --viz-grid: #e1e0d9;
+}
+
+[data-mantine-color-scheme='dark'] {
+  --viz-series-1: #3987e5;
+  --viz-series-2: #d95926;
+  --viz-grid: #2c2c2a;
+}

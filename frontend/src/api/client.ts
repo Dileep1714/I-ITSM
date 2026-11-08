@@ -1,4 +1,22 @@
 import type {
+  Availability,
+  CategoryAdminView,
+  CategoryRequest,
+  Correlation,
+  CreateUserRequest,
+  DraftAnalysis,
+  OverviewReport,
+  RelatedIncident,
+  Role,
+  ServiceAdminView,
+  ServiceReport,
+  ServiceRequest,
+  SlaPolicyRequest,
+  SlaPolicyView,
+  UpdateTechnicianRequest,
+  UpdateUserRequest,
+  UserAdminView,
+  WorkloadReport,
   AuditEntryView,
   CategoryView,
   CycleReport,
@@ -98,6 +116,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 const get = <T>(path: string) => request<T>('GET', path);
 const post = <T>(path: string, body?: unknown) => request<T>('POST', path, body ?? {});
 const put = <T>(path: string, body?: unknown) => request<T>('PUT', path, body ?? {});
+const del = <T>(path: string) => request<T>('DELETE', path);
 
 function query(params: Record<string, string | number | boolean | undefined>) {
   const search = new URLSearchParams();
@@ -157,6 +176,26 @@ export const api = {
     cancel: (id: number, text: string) => post<IncidentDetail>(`/incidents/${id}/cancel`, { text }),
     addNote: (id: number, text: string, internal: boolean) =>
       post<IncidentDetail>(`/incidents/${id}/notes`, { text, internal }),
+    similar: (id: number) => get<RelatedIncident[]>(`/incidents/${id}/similar`),
+    markDuplicate: (id: number, originalId: number) =>
+      post<IncidentDetail>(`/incidents/${id}/duplicate-of`, { originalId }),
+  },
+
+  intelligence: {
+    analyze: (req: { title: string; description?: string; serviceId?: number | null }) =>
+      post<DraftAnalysis>('/intelligence/analyze', req),
+    correlations: () => get<Correlation[]>('/intelligence/correlations'),
+  },
+
+  reports: {
+    overview: (from?: string, to?: string) => get<OverviewReport>(`/reports/overview${query({ from, to })}`),
+    technicians: (from?: string, to?: string) => get<WorkloadReport>(`/reports/technicians${query({ from, to })}`),
+    services: (from?: string, to?: string) => get<ServiceReport>(`/reports/services${query({ from, to })}`),
+  },
+
+  me: {
+    profile: () => get<UserAdminView>('/me/profile'),
+    setAvailability: (availability: Availability) => put<UserAdminView>('/me/availability', { availability }),
   },
 
   notifications: {
@@ -176,5 +215,25 @@ export const api = {
     strategies: () => get<StrategySettings>('/admin/strategies'),
     selectAssignment: (key: string) => put<StrategySettings>('/admin/strategies/assignment', { key }),
     selectPriority: (key: string) => put<StrategySettings>('/admin/strategies/priority', { key }),
+
+    categories: () => get<CategoryAdminView[]>('/admin/categories'),
+    createCategory: (req: CategoryRequest) => post<CategoryAdminView>('/admin/categories', req),
+    updateCategory: (id: number, req: CategoryRequest) => put<CategoryAdminView>(`/admin/categories/${id}`, req),
+
+    services: () => get<ServiceAdminView[]>('/admin/services'),
+    createService: (req: ServiceRequest) => post<ServiceAdminView>('/admin/services', req),
+    updateService: (id: number, req: ServiceRequest) => put<ServiceAdminView>(`/admin/services/${id}`, req),
+
+    slaPolicies: () => get<SlaPolicyView[]>('/admin/sla-policies'),
+    createSlaPolicy: (req: SlaPolicyRequest) => post<SlaPolicyView>('/admin/sla-policies', req),
+    updateSlaPolicy: (id: number, req: SlaPolicyRequest) => put<SlaPolicyView>(`/admin/sla-policies/${id}`, req),
+    deleteSlaPolicy: (id: number) => del<void>(`/admin/sla-policies/${id}`),
+
+    users: (role?: Role) => get<UserAdminView[]>(`/admin/users${query({ role })}`),
+    createUser: (req: CreateUserRequest) => post<UserAdminView>('/admin/users', req),
+    updateUser: (id: number, req: UpdateUserRequest) => put<UserAdminView>(`/admin/users/${id}`, req),
+    updateTechnician: (id: number, req: UpdateTechnicianRequest) =>
+      put<UserAdminView>(`/admin/users/${id}/technician`, req),
+    resetPassword: (id: number, password: string) => post<void>(`/admin/users/${id}/reset-password`, { password }),
   },
 };

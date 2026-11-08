@@ -43,7 +43,8 @@ export type IncidentOperation =
   | 'REJECT_RESOLUTION'
   | 'AUTO_VERIFY'
   | 'CLOSE'
-  | 'CANCEL';
+  | 'CANCEL'
+  | 'MARK_DUPLICATE';
 
 export type IncidentEventType =
   | 'CREATED'
@@ -139,6 +140,8 @@ export interface ReportIncidentRequest {
   impact: Impact;
   urgency: Urgency;
   affectedUsers?: number;
+  /** "Submit anyway" after the server answered DUPLICATE_INCIDENT. */
+  allowDuplicate?: boolean;
 }
 
 /** Filters for GET /api/incidents; all optional, combined with AND. */
@@ -343,4 +346,236 @@ export interface ErrorResponse {
   path: string;
   timestamp: string;
   fieldErrors: FieldError[];
+}
+
+// ----- intelligent features -----
+
+export type Relation = 'LIKELY_DUPLICATE' | 'SIMILAR';
+
+export interface CategorySuggestion {
+  categoryId: number;
+  name: string;
+  /** 0-1 */
+  confidence: number;
+  reasons: string[];
+}
+
+export interface RelatedIncident {
+  id: number;
+  number: string;
+  title: string;
+  status: IncidentStatus;
+  priority: PriorityLevel | null;
+  serviceName: string;
+  createdAt: string;
+  /** 0-1 */
+  score: number;
+  relation: Relation;
+  reasons: string[];
+  resolutionSummary: string | null;
+  resolutionCode: ResolutionCode | null;
+}
+
+export interface DraftAnalysis {
+  categorySuggestions: CategorySuggestion[];
+  similarIncidents: RelatedIncident[];
+}
+
+export interface Correlation {
+  rootServiceId: number;
+  rootServiceName: string;
+  affectedServices: string[];
+  explanation: string;
+  incidents: IncidentSummary[];
+}
+
+// ----- administration -----
+
+export type SupportLevel = 'L1_TECHNICIAN' | 'L2_TEAM_LEAD' | 'L3_SYSTEM_ADMIN' | 'L4_IT_MANAGER';
+export type Availability = 'AVAILABLE' | 'BUSY' | 'OFF_DUTY' | 'ON_LEAVE';
+
+export interface CategoryAdminView {
+  id: number;
+  name: string;
+  description: string | null;
+  active: boolean;
+  keywords: string[];
+}
+
+export interface CategoryRequest {
+  name: string;
+  description?: string | null;
+  keywords?: string[];
+  active?: boolean;
+}
+
+export interface ServiceAdminView {
+  id: number;
+  name: string;
+  description: string | null;
+  criticality: BusinessCriticality;
+  status: ServiceStatus;
+  dependsOn: NamedRef[];
+}
+
+export interface ServiceRequest {
+  name: string;
+  description?: string | null;
+  criticality: BusinessCriticality;
+  status?: ServiceStatus;
+  dependsOnIds?: number[];
+}
+
+export interface SlaPolicyView {
+  id: number;
+  priority: PriorityLevel;
+  serviceId: number | null;
+  serviceName: string | null;
+  responseMinutes: number;
+  resolutionMinutes: number;
+  warningThreshold: number;
+}
+
+export interface SlaPolicyRequest {
+  priority: PriorityLevel;
+  serviceId: number | null;
+  responseMinutes: number;
+  resolutionMinutes: number;
+  warningThreshold: number;
+}
+
+export interface SkillView {
+  categoryId: number;
+  categoryName: string;
+  proficiency: number;
+}
+
+export interface UserAdminView {
+  id: number;
+  fullName: string;
+  email: string;
+  role: Role;
+  active: boolean;
+  createdAt: string;
+  department: string | null;
+  location: string | null;
+  supportLevel: SupportLevel | null;
+  experienceYears: number | null;
+  maxActiveIncidents: number | null;
+  availability: Availability | null;
+  skills: SkillView[];
+  activeIncidents: number | null;
+}
+
+export interface SkillRequest {
+  categoryId: number;
+  proficiency: number;
+}
+
+export interface CreateUserRequest {
+  role: Role;
+  fullName: string;
+  email: string;
+  password: string;
+  department?: string;
+  location?: string;
+  supportLevel?: SupportLevel;
+  experienceYears?: number;
+  maxActiveIncidents?: number;
+  skills?: SkillRequest[];
+}
+
+export interface UpdateUserRequest {
+  fullName?: string;
+  email?: string;
+  active?: boolean;
+  department?: string;
+  location?: string;
+}
+
+export interface UpdateTechnicianRequest {
+  supportLevel?: SupportLevel;
+  experienceYears?: number;
+  maxActiveIncidents?: number;
+  availability?: Availability;
+  skills?: SkillRequest[];
+}
+
+// ----- reports -----
+
+export interface Period {
+  from: string;
+  to: string;
+}
+
+export interface Count<K> {
+  key: K;
+  count: number;
+}
+
+export interface OverviewReport {
+  period: Period;
+  totals: {
+    created: number;
+    openNow: number;
+    resolved: number;
+    closed: number;
+    cancelled: number;
+    slaBreached: number;
+    slaCompliancePercent: number | null;
+    avgResponseMinutes: number | null;
+    avgResolutionMinutes: number | null;
+    avgSatisfaction: number | null;
+    feedbackCount: number;
+  };
+  byStatus: Count<IncidentStatus>[];
+  byPriority: {
+    priority: PriorityLevel;
+    count: number;
+    open: number;
+    breached: number;
+    avgResolutionMinutes: number | null;
+  }[];
+  byCategory: Count<string>[];
+  daily: { date: string; created: number; resolved: number }[];
+}
+
+export interface TechnicianRow {
+  technicianId: number;
+  fullName: string;
+  supportLevel: SupportLevel;
+  availability: Availability;
+  active: boolean;
+  activeIncidents: number;
+  maxActiveIncidents: number;
+  utilizationPercent: number;
+  assignedInPeriod: number;
+  resolvedInPeriod: number;
+  avgResolutionMinutes: number | null;
+  slaBreaches: number;
+  avgSatisfaction: number | null;
+}
+
+export interface WorkloadReport {
+  period: Period;
+  technicians: TechnicianRow[];
+}
+
+export interface ServiceRow {
+  serviceId: number;
+  name: string;
+  criticality: BusinessCriticality;
+  status: ServiceStatus;
+  total: number;
+  open: number;
+  highPriority: number;
+  slaBreaches: number;
+  avgResolutionMinutes: number | null;
+  topCategory: string | null;
+  dependsOn: string[];
+}
+
+export interface ServiceReport {
+  period: Period;
+  services: ServiceRow[];
 }
