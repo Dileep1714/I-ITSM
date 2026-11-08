@@ -60,7 +60,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, PUBLIC_POST).permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**").permitAll()
+                        // WebSocket handshake: the STOMP CONNECT frame carries and verifies the token instead
+                        // (see StompAuthInterceptor), because browsers cannot set headers on a WebSocket upgrade.
+                        .requestMatchers(HttpMethod.GET, "/ws", "/ws/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMINISTRATOR")
+                        .requestMatchers("/api/reports/**", "/api/intelligence/correlations")
+                            .hasAnyRole("TECHNICIAN", "ADMINISTRATOR")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth -> oauth
