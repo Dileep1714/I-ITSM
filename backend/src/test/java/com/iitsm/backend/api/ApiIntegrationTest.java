@@ -240,7 +240,7 @@ class ApiIntegrationTest {
                 .andExpect(jsonPath("$.allowedOperations", empty()));   // nothing for the reporter to do yet
 
         getAs(ravi, "/api/incidents/" + id)
-                .andExpect(jsonPath("$.allowedOperations", containsInAnyOrder("ACKNOWLEDGE")));
+                .andExpect(jsonPath("$.allowedOperations", containsInAnyOrder("ACKNOWLEDGE", "MARK_DUPLICATE")));
 
         postAs(ravi, "/api/incidents/" + id + "/acknowledge", "")
                 .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("ACKNOWLEDGED"));

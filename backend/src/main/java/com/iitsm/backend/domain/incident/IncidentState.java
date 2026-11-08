@@ -48,4 +48,7 @@ interface IncidentState {
     void close(Incident incident, Instant now);
 
     void cancel(Incident incident, String reason, Incident original, Instant now);
+
+    /** Cancels the incident as a duplicate of {@code original}; possible until the incident is resolved. */
+    void markDuplicate(Incident incident, Incident original, Instant now);
 }

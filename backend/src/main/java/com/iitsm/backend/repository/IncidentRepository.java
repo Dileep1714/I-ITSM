@@ -8,6 +8,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.iitsm.backend.domain.user.Employee;
+import org.springframework.data.domain.Pageable;
+
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
@@ -19,6 +23,27 @@ public interface IncidentRepository extends JpaRepository<Incident, Long>, JpaSp
 
     @Query(value = "SELECT nextval('incident_number_seq')", nativeQuery = true)
     long nextIncidentNumber();
+
+    // ----- intelligent features: candidate sets (bounded by time and size, newest first) -----------------------
+
+    /** Recent incidents to compare a new or existing incident against (duplicates, similar, past fixes). */
+    List<Incident> findByCreatedAtGreaterThanEqualOrderByCreatedAtDesc(Instant since, Pageable limit);
+
+    /** Recent incidents that already have a category: the "training data" for category suggestions. */
+    List<Incident> findByCategoryIsNotNullAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(Instant since,
+                                                                                            Pageable limit);
+
+    /** Open incidents in a time window, for root-cause correlation. */
+    List<Incident> findByStatusInAndCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
+            Collection<IncidentStatus> statuses, Instant since);
+
+    /** A reporter's own incidents in the given statuses, for the "you already reported this" check. */
+    List<Incident> findByReporterAndStatusIn(Employee reporter, Collection<IncidentStatus> statuses);
+
+    // ----- reports ------------------------------------------------------------------------------------------------
+
+    /** Every incident created in [from, to). Reports aggregate in Java: simple, and fast enough at this scale. */
+    List<Incident> findByCreatedAtGreaterThanEqualAndCreatedAtLessThan(Instant from, Instant to);
 
     /** Ids only: the SLA monitor then processes each incident in its own short transaction. */
     @Query("SELECT i.id FROM Incident i WHERE i.status IN :statuses ORDER BY i.id")

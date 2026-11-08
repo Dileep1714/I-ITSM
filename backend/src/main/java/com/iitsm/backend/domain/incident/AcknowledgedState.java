@@ -10,7 +10,7 @@ import java.util.Set;
 final class AcknowledgedState extends AbstractIncidentState {
 
     private static final Set<IncidentOperation> ALLOWED = Set.copyOf(
-            EnumSet.of(IncidentOperation.START_WORK, IncidentOperation.ASSIGN));
+            EnumSet.of(IncidentOperation.MARK_DUPLICATE, IncidentOperation.START_WORK, IncidentOperation.ASSIGN));
 
     @Override
     public IncidentStatus status() {
@@ -30,5 +30,11 @@ final class AcknowledgedState extends AbstractIncidentState {
     @Override
     public void assign(Incident incident, Technician technician, int technicianActiveIncidents, Instant now) {
         incident.applyAssignment(technician, technicianActiveIncidents, now);
+    }
+
+    /** Duplicates are often noticed only once someone starts looking, so this is allowed until resolution. */
+    @Override
+    public void markDuplicate(Incident incident, Incident original, Instant now) {
+        incident.applyCancellation("Duplicate of " + original.getNumber(), original, now);
     }
 }

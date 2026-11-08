@@ -108,15 +108,18 @@ class IncidentLifecycleTest {
     @DisplayName("Each state exposes exactly the operations it allows")
     void allowedOperationsFollowTheState() {
         assertThat(incident.allowedOperations())
-                .containsExactlyInAnyOrder(IncidentOperation.CLASSIFY, IncidentOperation.CANCEL);
+                .containsExactlyInAnyOrder(IncidentOperation.CLASSIFY, IncidentOperation.CANCEL,
+                        IncidentOperation.MARK_DUPLICATE);
 
         incident.classify(application, p1Priority(), p1Policy, minutesAfterT0(1));
         assertThat(incident.allowedOperations())
-                .containsExactlyInAnyOrder(IncidentOperation.ASSIGN, IncidentOperation.CANCEL);
+                .containsExactlyInAnyOrder(IncidentOperation.ASSIGN, IncidentOperation.CANCEL,
+                        IncidentOperation.MARK_DUPLICATE);
 
         incident.assign(technician, 0, minutesAfterT0(2));
         assertThat(incident.allowedOperations())
-                .containsExactlyInAnyOrder(IncidentOperation.ACKNOWLEDGE, IncidentOperation.ASSIGN);
+                .containsExactlyInAnyOrder(IncidentOperation.ACKNOWLEDGE, IncidentOperation.ASSIGN,
+                        IncidentOperation.MARK_DUPLICATE);
     }
 
     // ----- invalid transitions -----------------------------------------------------------------------------------

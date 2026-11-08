@@ -16,5 +16,7 @@ public enum IncidentOperation {
     REJECT_RESOLUTION,
     AUTO_VERIFY,
     CLOSE,
-    CANCEL
+    CANCEL,
+    /** Cancel as a duplicate of another open incident (support staff; allowed until resolution). */
+    MARK_DUPLICATE
 }

@@ -67,6 +67,7 @@ public class IncidentService {
     private final IncidentPermissions permissions;
     private final IncidentMapper mapper;
     private final IncidentEventPublisher events;
+    private final IntelligenceService intelligence;
     private final CurrentUserService currentUser;
     private final Clock clock;
 
@@ -75,7 +76,7 @@ public class IncidentService {
                            AuditEntryRepository auditEntries, AssignmentCandidateService candidates,
                            StrategyRegistry<AssignmentStrategy> assignmentStrategies, IncidentRouter router,
                            IncidentPermissions permissions, IncidentMapper mapper, IncidentEventPublisher events,
-                           CurrentUserService currentUser, Clock clock) {
+                           IntelligenceService intelligence, CurrentUserService currentUser, Clock clock) {
         this.incidents = incidents;
         this.services = services;
         this.categories = categories;
@@ -87,6 +88,7 @@ public class IncidentService {
         this.permissions = permissions;
         this.mapper = mapper;
         this.events = events;
+        this.intelligence = intelligence;
         this.currentUser = currentUser;
         this.clock = clock;
     }
@@ -104,6 +106,9 @@ public class IncidentService {
         }
         ItService service = services.findById(request.serviceId())
                 .orElseThrow(() -> new ServiceNotFoundException(request.serviceId()));
+        if (!Boolean.TRUE.equals(request.allowDuplicate())) {
+            intelligence.rejectOwnDuplicate(reporter, request.title(), request.description(), service);
+        }
         Instant now = clock.instant();
 
         Incident incident = Incident.builder()
@@ -120,8 +125,12 @@ public class IncidentService {
         incidents.save(incident);
         events.publishChanges(incident, user);  // "reported by Asha"
 
-        if (request.categoryId() != null) {
-            router.classifyAndRoute(incident, loadCategory(request.categoryId()), now);
+        // No category chosen? The intelligent categorizer classifies it if it is confident enough.
+        Category category = request.categoryId() != null
+                ? loadCategory(request.categoryId())
+                : intelligence.autoCategory(request.title(), request.description()).orElse(null);
+        if (category != null) {
+            router.classifyAndRoute(incident, category, now);
         }
         incident.evaluateSla(now);
         // Classification and assignment were decided automatically, so they are the system's actions: the
@@ -213,6 +222,12 @@ public class IncidentService {
 
     public IncidentDetail cancel(Long incidentId, String reason) {
         return perform(incidentId, IncidentOperation.CANCEL, (incident, user, now) -> incident.cancel(reason, now));
+    }
+
+    /** Support staff link a duplicate to the original and cancel it (usually from the "similar incidents" list). */
+    public IncidentDetail markDuplicate(Long incidentId, Long originalId) {
+        return perform(incidentId, IncidentOperation.MARK_DUPLICATE,
+                (incident, user, now) -> incident.markDuplicateOf(load(originalId), now));
     }
 
     // ----- notes, history & reading ------------------------------------------------------------------------------

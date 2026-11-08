@@ -38,10 +38,10 @@ public class IncidentPermissions {
         BY_ROLE.put(Role.TECHNICIAN, EnumSet.of(
                 IncidentOperation.CLASSIFY, IncidentOperation.ASSIGN, IncidentOperation.ACKNOWLEDGE,
                 IncidentOperation.START_WORK, IncidentOperation.REQUEST_INFO, IncidentOperation.RESOLVE,
-                IncidentOperation.CLOSE, IncidentOperation.CANCEL));
+                IncidentOperation.CLOSE, IncidentOperation.CANCEL, IncidentOperation.MARK_DUPLICATE));
         BY_ROLE.put(Role.ADMINISTRATOR, EnumSet.of(
                 IncidentOperation.CLASSIFY, IncidentOperation.ASSIGN, IncidentOperation.CLOSE,
-                IncidentOperation.CANCEL));
+                IncidentOperation.CANCEL, IncidentOperation.MARK_DUPLICATE));
         // AUTO_VERIFY is performed by the system only.
     }
 

@@ -286,7 +286,7 @@ public class Incident {
             throw new BusinessRuleException("ORIGINAL_NOT_OPEN",
                     "Can only link to an open incident; " + original.getNumber() + " is " + original.getStatus());
         }
-        state().cancel(this, "Duplicate of " + original.getNumber(), original, now);
+        state().markDuplicate(this, original, now);
     }
 
     // =============================================================================================================

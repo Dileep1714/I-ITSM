@@ -37,6 +37,7 @@ class IncidentStatesTest {
         CALLS.put(IncidentOperation.AUTO_VERIFY, s -> s.autoVerify(null, null));
         CALLS.put(IncidentOperation.CLOSE, s -> s.close(null, null));
         CALLS.put(IncidentOperation.CANCEL, s -> s.cancel(null, null, null, null));
+        CALLS.put(IncidentOperation.MARK_DUPLICATE, s -> s.markDuplicate(null, null, null));
     }
 
     @ParameterizedTest(name = "{0}")

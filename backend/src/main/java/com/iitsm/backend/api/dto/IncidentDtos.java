@@ -42,7 +42,9 @@ public final class IncidentDtos {
             Long categoryId,
             @NotNull Impact impact,
             @NotNull Urgency urgency,
-            @Min(1) @Max(Incident.MAX_AFFECTED_USERS) Integer affectedUsers) {
+            @Min(1) @Max(Incident.MAX_AFFECTED_USERS) Integer affectedUsers,
+            /* true = "submit anyway" after the server warned this repeats one of my open incidents */
+            Boolean allowDuplicate) {
     }
 
     public record ClassifyRequest(@NotNull Long categoryId) {

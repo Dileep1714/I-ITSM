@@ -80,4 +80,9 @@ abstract class AbstractIncidentState implements IncidentState {
     public void cancel(Incident incident, String reason, Incident original, Instant now) {
         throw reject(IncidentOperation.CANCEL);
     }
+
+    @Override
+    public void markDuplicate(Incident incident, Incident original, Instant now) {
+        throw reject(IncidentOperation.MARK_DUPLICATE);
+    }
 }
