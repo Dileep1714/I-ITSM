@@ -219,12 +219,9 @@ export function ReportIncidentPage() {
                   <Group>
                     <PriorityBadge priority={preview.data.level} />
                     <Text fw={500}>{preview.data.label}</Text>
-                    <Text size="sm" c="dimmed">
-                      score {preview.data.score.toFixed(1)}
-                    </Text>
                   </Group>
                   <Text size="sm" c="dimmed">
-                    {preview.data.rationale}
+                    Based on the impact, urgency, number of users and the service you chose. Support staff may adjust it.
                   </Text>
                 </Stack>
               )}

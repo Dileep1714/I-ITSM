@@ -50,19 +50,15 @@ export function RelatedIncidents({ incident, onUpdated }: { incident: IncidentDe
         <IconCopy size={18} />
         <Text fw={600}>Related incidents</Text>
       </Group>
-      <Stack gap="sm">
+      <Stack gap="md">
         {related.data.map((r) => (
           <div key={r.id}>
-            <Group gap={6} wrap="nowrap">
-              <Badge size="xs" color={r.relation === 'LIKELY_DUPLICATE' ? 'orange' : 'gray'} variant="light">
-                {r.relation === 'LIKELY_DUPLICATE' ? 'Likely duplicate' : 'Similar'}
-              </Badge>
-              <Anchor component={Link} to={`/incidents/${r.id}`} size="sm" ff="monospace">
+            <Group justify="space-between" gap="xs" wrap="nowrap">
+              <Anchor component={Link} to={`/incidents/${r.id}`} size="sm" ff="monospace" style={{ whiteSpace: 'nowrap' }}>
                 {r.number}
               </Anchor>
-              <StatusBadge status={r.status} />
-              <Tooltip label={r.reasons.join(' · ')} multiline w={260} withArrow>
-                <Text size="xs" c="dimmed">
+              <Tooltip label={r.reasons.join(' · ')} multiline w={260}>
+                <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
                   {Math.round(r.score * 100)}% match
                 </Text>
               </Tooltip>
@@ -70,6 +66,12 @@ export function RelatedIncidents({ incident, onUpdated }: { incident: IncidentDe
             <Text size="sm" lineClamp={2}>
               {r.title}
             </Text>
+            <Group gap={6} mt={4}>
+              <Badge size="sm" color={r.relation === 'LIKELY_DUPLICATE' ? 'orange' : 'gray'}>
+                {r.relation === 'LIKELY_DUPLICATE' ? 'Likely duplicate' : 'Similar'}
+              </Badge>
+              <StatusBadge status={r.status} />
+            </Group>
             {r.resolutionSummary && (
               <Group gap={4} wrap="nowrap" align="flex-start" mt={2}>
                 <IconBulb size={14} color="var(--mantine-color-teal-6)" style={{ flexShrink: 0, marginTop: 2 }} />

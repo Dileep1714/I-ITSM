@@ -1,4 +1,4 @@
-import { Badge, Card, Group, Progress, SegmentedControl, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Card, Group, Progress, SegmentedControl, SimpleGrid, Stack, Text, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
@@ -19,7 +19,7 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** The logged-in user's own profile. Technicians also see their skills and workload and set their availability. */
+/** The logged-in user's own profile. Technicians also see their workload and set their availability. */
 export function ProfilePage() {
   const queryClient = useQueryClient();
   const profile = useQuery({ queryKey: ['me', 'profile'], queryFn: api.me.profile });
@@ -68,43 +68,24 @@ export function ProfilePage() {
                     disabled={setAvailability.isPending}
                   />
                 </Card>
-                <SimpleGrid cols={{ base: 1, sm: 2 }}>
-                  <Card withBorder radius="md">
-                    <Text fw={600} mb="xs">
-                      Workload
+                <Card withBorder radius="md">
+                  <Text fw={600} mb="xs">
+                    Workload
+                  </Text>
+                  <Group justify="space-between">
+                    <Text size="sm">
+                      {profile.data.activeIncidents} of {profile.data.maxActiveIncidents} active incidents
                     </Text>
-                    <Group justify="space-between">
-                      <Text size="sm">
-                        {profile.data.activeIncidents} of {profile.data.maxActiveIncidents} active incidents
-                      </Text>
-                      <Text size="sm" c="dimmed">
-                        {humanize(profile.data.supportLevel?.replace(/^L\d_/, ''))} · {profile.data.experienceYears} yrs
-                      </Text>
-                    </Group>
-                    <Progress
-                      mt="xs"
-                      value={(100 * (profile.data.activeIncidents ?? 0)) / (profile.data.maxActiveIncidents ?? 1)}
-                      aria-label="Workload"
-                    />
-                  </Card>
-                  <Card withBorder radius="md">
-                    <Text fw={600} mb="xs">
-                      Skills
+                    <Text size="sm" c="dimmed">
+                      {humanize(profile.data.supportLevel?.replace(/^L\d_/, ''))} · {profile.data.experienceYears} yrs
                     </Text>
-                    <Group gap="xs">
-                      {profile.data.skills.length === 0 && (
-                        <Text size="sm" c="dimmed">
-                          No skills recorded yet: ask an administrator.
-                        </Text>
-                      )}
-                      {profile.data.skills.map((s) => (
-                        <Badge key={s.categoryId} variant="light">
-                          {s.categoryName} {s.proficiency}/5
-                        </Badge>
-                      ))}
-                    </Group>
-                  </Card>
-                </SimpleGrid>
+                  </Group>
+                  <Progress
+                    mt="xs"
+                    value={(100 * (profile.data.activeIncidents ?? 0)) / (profile.data.maxActiveIncidents ?? 1)}
+                    aria-label="Workload"
+                  />
+                </Card>
               </>
             )}
           </>

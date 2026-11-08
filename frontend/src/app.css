@@ -1,0 +1,48 @@
+/*
+ * Application surfaces. Pages sit on a tinted canvas; cards and tables are the content surfaces on top of it,
+ * separated by hairline borders rather than heavy shadows.
+ *
+ * Mantine marks the active scheme on <html> with data-mantine-color-scheme, so each value is declared once for
+ * light and once for dark on that element.
+ */
+:root {
+  --app-canvas: #f4f5f7;
+  --app-surface: #ffffff;
+  --app-border: #e3e5e9;
+  --app-table-head: #f8f9fb;
+  --app-sidebar: #111827;
+  --app-sidebar-text: #c9ced8;
+  --app-sidebar-muted: #7b8494;
+  --app-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --app-sidebar-active: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-mantine-color-scheme='dark'] {
+  --app-canvas: #121418;
+  --app-surface: #1a1d23;
+  --app-border: #2a2e36;
+  --app-table-head: #20242b;
+  --app-sidebar: #0b0d11;
+}
+
+body {
+  background: var(--app-canvas);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Content surfaces: crisp hairline borders in both modes. */
+.mantine-Paper-root[data-with-border],
+.mantine-Card-root[data-with-border] {
+  border-color: var(--app-border);
+  background: var(--app-surface);
+}
+
+/* Numbers in tables line up. */
+.mantine-Table-td {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Table headers get a faint band so long tables scan easily. */
+.mantine-Table-thead {
+  background: var(--app-table-head);
+}

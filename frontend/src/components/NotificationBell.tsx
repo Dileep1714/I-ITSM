@@ -16,8 +16,8 @@ export function NotificationBell() {
 
   return (
     <Indicator label={unread > 99 ? '99+' : unread} size={16} disabled={unread === 0} color="red" offset={4}>
-      <ActionIcon variant="subtle" size="lg" aria-label="Notifications" onClick={() => navigate('/notifications')}>
-        <IconBell size={20} />
+      <ActionIcon variant="subtle" color="gray" size="lg" aria-label="Notifications" onClick={() => navigate('/notifications')}>
+        <IconBell size={18} stroke={1.6} />
       </ActionIcon>
     </Indicator>
   );

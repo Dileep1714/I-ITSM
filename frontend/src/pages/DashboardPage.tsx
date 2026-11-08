@@ -1,4 +1,4 @@
-import { Alert, Anchor, Badge, Button, Group, Paper, SimpleGrid, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { Anchor, Badge, Button, Group, Paper, SimpleGrid, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { IconAlertTriangle, IconCircleCheck, IconTopologyStar3, IconClockExclamation, IconFlame, IconPlus, IconTicket } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -22,7 +22,7 @@ function StatCard({ label, value, icon, color, to }: { label: string; value: num
             {value ?? '–'}
           </Text>
         </div>
-        <ThemeIcon color={color} variant="light" size={44} radius="md">
+        <ThemeIcon color={color} variant="transparent" size={28}>
           {icon}
         </ThemeIcon>
       </Group>
@@ -91,30 +91,44 @@ export function DashboardPage() {
         )}
       </Group>
 
-      <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }}>
-        <StatCard label="Open" value={counts.open} color="blue" icon={<IconTicket size={24} />} to={link({})} />
-        <StatCard label="High priority (P1/P2)" value={counts.critical} color="orange" icon={<IconFlame size={24} />} to={link({ priority: 'P1,P2' })} />
-        <StatCard label="SLA at risk" value={counts.atRisk} color="yellow" icon={<IconClockExclamation size={24} />} to={link({ sla: 'AT_RISK' })} />
-        <StatCard label="SLA breached" value={counts.breached} color="red" icon={<IconAlertTriangle size={24} />} to={link({ sla: 'BREACHED' })} />
+      <SimpleGrid cols={{ base: 2, md: 4 }}>
+        <StatCard label="Open" value={counts.open} color="blue" icon={<IconTicket size={22} stroke={1.6} />} to={link({})} />
+        <StatCard label="High priority (P1/P2)" value={counts.critical} color="orange" icon={<IconFlame size={22} stroke={1.6} />} to={link({ priority: 'P1,P2' })} />
+        <StatCard label="SLA at risk" value={counts.atRisk} color="yellow" icon={<IconClockExclamation size={22} stroke={1.6} />} to={link({ sla: 'AT_RISK' })} />
+        <StatCard label="SLA breached" value={counts.breached} color="red" icon={<IconAlertTriangle size={22} stroke={1.6} />} to={link({ sla: 'BREACHED' })} />
       </SimpleGrid>
 
       {correlations.data?.map((c) => (
-        <Alert
+        <Paper
           key={c.rootServiceId}
-          color="orange"
-          variant="light"
-          icon={<IconTopologyStar3 size={18} />}
-          title={`Possible common cause: ${c.rootServiceName}`}
+          withBorder
+          p="md"
+          style={{ borderLeft: '3px solid var(--mantine-color-orange-6)' }}
         >
-          <Text size="sm">{c.explanation}</Text>
-          <Group gap={6} mt="xs">
+          <Group gap="xs" mb={4} wrap="nowrap">
+            <IconTopologyStar3 size={18} stroke={1.6} color="var(--mantine-color-orange-6)" />
+            <Text fw={600} size="sm">
+              Possible common cause: {c.rootServiceName}
+            </Text>
+          </Group>
+          <Text size="sm" c="dimmed">
+            {c.explanation}
+          </Text>
+          <Group gap={6} mt="sm">
             {c.incidents.map((i) => (
-              <Badge key={i.id} component={Link} to={`/incidents/${i.id}`} variant="outline" color="orange" style={{ cursor: 'pointer' }}>
+              <Badge
+                key={i.id}
+                component={Link}
+                to={`/incidents/${i.id}`}
+                variant="default"
+                ff="monospace"
+                style={{ cursor: 'pointer', fontWeight: 400 }}
+              >
                 {i.number} · {i.serviceName}
               </Badge>
             ))}
           </Group>
-        </Alert>
+        </Paper>
       ))}
 
       {isEmployee && (awaiting.data?.content.length ?? 0) > 0 && (

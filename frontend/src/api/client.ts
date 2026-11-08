@@ -95,12 +95,19 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   }
 
   const text = await response.text();
-  const data = text ? JSON.parse(text) : undefined;
+  // Errors from outside the application (proxy, CORS filter, gateway) may be plain text or HTML, not JSON.
+  let data: unknown;
+  try {
+    data = text ? JSON.parse(text) : undefined;
+  } catch {
+    data = response.ok ? undefined : { code: 'HTTP_' + response.status, message: text.slice(0, 200), status: response.status,
+      path, timestamp: new Date().toISOString(), fieldErrors: [] };
+  }
 
   if (!response.ok) {
     if (response.status === 401 && token) onUnauthorized();
     throw new ApiError(
-      data ?? {
+      (data as ErrorResponse | undefined) ?? {
         code: 'HTTP_' + response.status,
         message: response.statusText || 'Request failed',
         status: response.status,
@@ -163,6 +170,7 @@ export const api = {
     recommendations: (id: number) => get<Recommendation[]>(`/incidents/${id}/recommendations`),
     assign: (id: number, technicianId: number) =>
       post<IncidentDetail>(`/incidents/${id}/assign`, { technicianId }),
+    take: (id: number) => post<IncidentDetail>(`/incidents/${id}/take`),
     acknowledge: (id: number) => post<IncidentDetail>(`/incidents/${id}/acknowledge`),
     start: (id: number) => post<IncidentDetail>(`/incidents/${id}/start`),
     requestInfo: (id: number, text: string) => post<IncidentDetail>(`/incidents/${id}/request-info`, { text }),

@@ -32,11 +32,12 @@ import {
   IconThumbDown,
   IconThumbUp,
   IconTool,
+  IconUserCheck,
   IconUserPlus,
   IconX,
 } from '@tabler/icons-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../../api/client';
 import type { AuditEntryView, IncidentDetail, IncidentOperation } from '../../api/types';
@@ -125,6 +126,20 @@ export function IncidentDetailPage() {
     });
   };
 
+  /**
+   * The logged-in technician takes the incident: "take" for an unassigned one (any level), otherwise an
+   * assignment to themselves (team lead and above, e.g. taking over from a colleague).
+   */
+  const assignToMe = () => {
+    if (!user || !incidentQuery.data) return;
+    const call = incidentQuery.data.allowedOperations.includes('TAKE')
+      ? () => api.incidents.take(id)
+      : () => api.incidents.assign(id, user.id);
+    run(call, 'Assigned to you').catch((e) =>
+      notifications.show({ color: 'red', icon: <IconX size={16} />, title: 'Not possible', message: errorMessage(e) }),
+    );
+  };
+
   return (
     <Stack>
       <Anchor component={Link} to="/incidents" size="sm">
@@ -138,6 +153,14 @@ export function IncidentDetailPage() {
             incident={incidentQuery.data}
             isStaff={user?.role !== 'EMPLOYEE'}
             onAction={onAction}
+            onAssignToMe={
+              // Only technicians can own incidents (an administrator is not one); hide it if it is already mine.
+              user?.role === 'TECHNICIAN' &&
+              incidentQuery.data.assignee?.id !== user.id &&
+              (incidentQuery.data.allowedOperations.includes('TAKE') || incidentQuery.data.allowedOperations.includes('ASSIGN'))
+                ? assignToMe
+                : undefined
+            }
             history={history.data ?? []}
             onUpdated={applyUpdate}
           />
@@ -154,12 +177,14 @@ function IncidentView({
   incident: i,
   isStaff,
   onAction,
+  onAssignToMe,
   history,
   onUpdated,
 }: {
   incident: IncidentDetail;
   isStaff: boolean;
   onAction: (op: IncidentOperation) => void;
+  onAssignToMe?: () => void;
   history: AuditEntryView[];
   onUpdated: (i: IncidentDetail) => void;
 }) {
@@ -187,12 +212,24 @@ function IncidentView({
             </Text>
           </div>
         </Group>
-        {actions.length > 0 && (
+        {(actions.length > 0 || onAssignToMe) && (
           <Group mt="md" gap="xs">
-            {actions.map((a) => (
-              <Button key={a.op} leftSection={a.icon} color={a.color} variant={a.variant ?? 'filled'} size="sm" onClick={() => onAction(a.op)}>
-                {a.label}
+            {onAssignToMe && !i.allowedOperations.includes('ASSIGN') && (
+              <Button leftSection={<IconUserCheck size={16} />} size="sm" onClick={onAssignToMe}>
+                Take it
               </Button>
+            )}
+            {actions.map((a) => (
+              <Fragment key={a.op}>
+                <Button leftSection={a.icon} color={a.color} variant={a.variant ?? 'filled'} size="sm" onClick={() => onAction(a.op)}>
+                  {a.label}
+                </Button>
+                {a.op === 'ASSIGN' && onAssignToMe && (
+                  <Button leftSection={<IconUserCheck size={16} />} variant="light" size="sm" onClick={onAssignToMe}>
+                    Assign to me
+                  </Button>
+                )}
+              </Fragment>
             ))}
           </Group>
         )}
@@ -340,9 +377,11 @@ function IncidentView({
                   <PriorityBadge priority={i.priority.level} />
                   <Text size="sm">{i.priority.label}</Text>
                 </Group>
-                <Text size="xs" c="dimmed">
-                  Score {i.priority.score.toFixed(1)}: {i.priority.rationale}
-                </Text>
+                {i.priority.rationale && (
+                  <Text size="xs" c="dimmed">
+                    Score {i.priority.score?.toFixed(1)}: {i.priority.rationale}
+                  </Text>
+                )}
               </Card>
             )}
 
@@ -410,7 +449,7 @@ function NotesPanel({ incident, isStaff, onUpdated }: { incident: IncidentDetail
         </Text>
       )}
       {incident.notes.map((n) => (
-        <Card key={n.id} withBorder p="sm" bg={n.internal ? 'var(--mantine-color-yellow-0)' : undefined}>
+        <Card key={n.id} withBorder p="sm" bg={n.internal ? 'var(--mantine-color-yellow-light)' : undefined}>
           <Group gap="xs">
             <Text size="sm" fw={600}>
               {n.author.fullName}

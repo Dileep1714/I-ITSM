@@ -1,9 +1,10 @@
-import { Alert, Anchor, Button, Center, Group, Paper, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Group, PasswordInput, Stack, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { AuthLayout } from '../components/AuthLayout';
 import { errorMessage } from '../lib/format';
 
 export function RegisterPage() {
@@ -42,38 +43,49 @@ export function RegisterPage() {
   });
 
   return (
-    <Center mih="100vh" p="md" bg="var(--mantine-color-gray-0)">
-      <Paper withBorder shadow="sm" p="xl" radius="md" w={480} maw="100%">
-        <Title order={3} mb="md">
-          Create an employee account
-        </Title>
-        <form onSubmit={submit}>
-          <Stack>
-            {error && (
-              <Alert color="red" icon={<IconAlertCircle size={16} />} style={{ whiteSpace: 'pre-line' }}>
-                {error}
-              </Alert>
-            )}
-            <TextInput label="Full name" required {...form.getInputProps('fullName')} />
-            <TextInput label="Email" required autoComplete="username" {...form.getInputProps('email')} />
-            <Group grow>
-              <TextInput label="Department" {...form.getInputProps('department')} />
-              <TextInput label="Location" {...form.getInputProps('location')} />
-            </Group>
-            <PasswordInput label="Password" required autoComplete="new-password" {...form.getInputProps('password')} />
-            <PasswordInput label="Confirm password" required autoComplete="new-password" {...form.getInputProps('confirm')} />
-            <Button type="submit" loading={submitting}>
-              Register
-            </Button>
-            <Text size="sm" ta="center">
-              Already registered?{' '}
-              <Anchor component={Link} to="/login">
-                Log in
-              </Anchor>
-            </Text>
-          </Stack>
-        </form>
-      </Paper>
-    </Center>
+    <AuthLayout
+      title="Create an employee account"
+      subtitle="Report incidents and follow them to resolution. Support staff accounts are created by an administrator."
+    >
+      <form onSubmit={submit}>
+        <Stack>
+          {error && (
+            <Alert color="red" icon={<IconAlertCircle size={16} />} style={{ whiteSpace: 'pre-line' }}>
+              {error}
+            </Alert>
+          )}
+          <TextInput label="Full name" required {...form.getInputProps('fullName')} />
+          <TextInput
+            label="Work email"
+            placeholder="you@iitsm.example.com"
+            description="Only organisation email addresses can register"
+            required
+            autoComplete="username"
+            {...form.getInputProps('email')}
+          />
+          <Group grow>
+            <TextInput label="Department" {...form.getInputProps('department')} />
+            <TextInput label="Location" {...form.getInputProps('location')} />
+          </Group>
+          <PasswordInput
+            label="Password"
+            description="At least 8 characters, with a letter and a digit"
+            required
+            autoComplete="new-password"
+            {...form.getInputProps('password')}
+          />
+          <PasswordInput label="Confirm password" required autoComplete="new-password" {...form.getInputProps('confirm')} />
+          <Button type="submit" loading={submitting} fullWidth mt="xs">
+            Create account
+          </Button>
+          <Text size="sm" c="dimmed" ta="center">
+            Already have an account?{' '}
+            <Anchor component={Link} to="/login">
+              Sign in
+            </Anchor>
+          </Text>
+        </Stack>
+      </form>
+    </AuthLayout>
   );
 }

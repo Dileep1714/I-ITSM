@@ -106,7 +106,7 @@ export function ActionModals({ incident, operation, onClose, run }: Props) {
         <Stack>
           {errorAlert}
           {operation === 'PROVIDE_INFO' && pendingQuestion && (
-            <Card withBorder bg="var(--mantine-color-gray-0)">
+            <Card withBorder bg="var(--app-canvas)">
               <Text size="xs" c="dimmed">
                 {pendingQuestion.askedBy.fullName} asked:
               </Text>

@@ -44,7 +44,8 @@ export type IncidentOperation =
   | 'AUTO_VERIFY'
   | 'CLOSE'
   | 'CANCEL'
-  | 'MARK_DUPLICATE';
+  | 'MARK_DUPLICATE'
+  | 'TAKE';
 
 export type IncidentEventType =
   | 'CREATED'
@@ -113,8 +114,9 @@ export interface CategoryView {
 export interface PriorityView {
   level: PriorityLevel;
   label: string;
-  score: number;
-  rationale: string;
+  /** null for employees: the calculation is internal to support staff. */
+  score: number | null;
+  rationale: string | null;
 }
 
 export interface StrategyView {

@@ -1,9 +1,10 @@
-import { Alert, Anchor, Button, Center, Code, Paper, PasswordInput, Stack, Table, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Anchor, Button, Code, Paper, PasswordInput, Stack, Table, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { AuthLayout } from '../components/AuthLayout';
 import { errorMessage } from '../lib/format';
 
 const DEMO_ACCOUNTS = [
@@ -45,65 +46,60 @@ export function LoginPage() {
   });
 
   return (
-    <Center mih="100vh" p="md" bg="var(--mantine-color-gray-0)">
-      <Stack w={420} maw="100%">
-        <div>
-          <Title order={2} ta="center">
-            I-ITSM
-          </Title>
-          <Text c="dimmed" ta="center" size="sm">
-            Intelligent IT Service Management
+    <AuthLayout title="Sign in" subtitle="Use your work email and password.">
+      <form onSubmit={submit}>
+        <Stack>
+          {error && (
+            <Alert color="red" icon={<IconAlertCircle size={16} />}>
+              {error}
+            </Alert>
+          )}
+          <TextInput label="Email" placeholder="you@company.com" autoComplete="username" {...form.getInputProps('email')} />
+          <PasswordInput label="Password" autoComplete="current-password" {...form.getInputProps('password')} />
+          <Button type="submit" loading={submitting} fullWidth mt="xs">
+            Sign in
+          </Button>
+          <Text size="sm" c="dimmed" ta="center">
+            New employee?{' '}
+            <Anchor component={Link} to="/register">
+              Create an account
+            </Anchor>
           </Text>
-        </div>
-        <Paper withBorder shadow="sm" p="xl" radius="md">
-          <form onSubmit={submit}>
-            <Stack>
-              {error && (
-                <Alert color="red" icon={<IconAlertCircle size={16} />}>
-                  {error}
-                </Alert>
-              )}
-              <TextInput label="Email" placeholder="you@company.com" autoComplete="username" {...form.getInputProps('email')} />
-              <PasswordInput label="Password" autoComplete="current-password" {...form.getInputProps('password')} />
-              <Button type="submit" loading={submitting} fullWidth>
-                Log in
-              </Button>
-              <Text size="sm" ta="center">
-                No account?{' '}
-                <Anchor component={Link} to="/register">
-                  Register as an employee
-                </Anchor>
-              </Text>
-            </Stack>
-          </form>
+        </Stack>
+      </form>
+
+      {import.meta.env.DEV && (
+        <Paper withBorder p="md" mt="xl">
+          <Text size="xs" fw={600} tt="uppercase" c="dimmed" mb={6} style={{ letterSpacing: '0.04em' }}>
+            Demo accounts · password{' '}
+            <Code fz="xs" style={{ textTransform: 'none' }}>
+              Password123
+            </Code>
+          </Text>
+          <Table verticalSpacing={4} fz="sm" highlightOnHover={false}>
+            <Table.Tbody>
+              {DEMO_ACCOUNTS.map((a) => (
+                <Table.Tr key={a.email}>
+                  <Table.Td c="dimmed" pl={0}>
+                    {a.role}
+                  </Table.Td>
+                  <Table.Td pr={0}>
+                    <Anchor
+                      component="button"
+                      type="button"
+                      size="sm"
+                      ff="monospace"
+                      onClick={() => form.setValues({ email: a.email, password: 'Password123' })}
+                    >
+                      {a.email}
+                    </Anchor>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
         </Paper>
-        {import.meta.env.DEV && (
-          <Paper withBorder p="md" radius="md">
-            <Text size="sm" fw={600} mb={4}>
-              Demo accounts (password <Code>Password123</Code>)
-            </Text>
-            <Table verticalSpacing={4} fz="sm">
-              <Table.Tbody>
-                {DEMO_ACCOUNTS.map((a) => (
-                  <Table.Tr key={a.email}>
-                    <Table.Td c="dimmed">{a.role}</Table.Td>
-                    <Table.Td>
-                      <Anchor
-                        component="button"
-                        type="button"
-                        size="sm"
-                        onClick={() => form.setValues({ email: a.email, password: 'Password123' })}
-                      >
-                        {a.email}
-                      </Anchor>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-          </Paper>
-        )}
-      </Stack>
-    </Center>
+      )}
+    </AuthLayout>
   );
 }

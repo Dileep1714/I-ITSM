@@ -1,0 +1,82 @@
+/* Dark, full-height sidebar: the frame of every screen. */
+.navbar {
+  background: var(--app-sidebar);
+  border-right: none;
+  color: var(--app-sidebar-text);
+}
+
+.brand {
+  padding: 18px 16px 14px;
+}
+
+.section {
+  padding: 14px 16px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--app-sidebar-muted);
+}
+
+.link {
+  margin: 1px 8px;
+  width: auto;
+  border-radius: var(--mantine-radius-sm);
+  padding: 7px 10px;
+  color: var(--app-sidebar-text);
+  font-size: var(--mantine-font-size-sm);
+
+  &:hover {
+    background: var(--app-sidebar-hover);
+    color: #ffffff;
+  }
+
+  &[data-active] {
+    background: var(--app-sidebar-active);
+    color: #ffffff;
+    box-shadow: inset 2px 0 0 var(--mantine-primary-color-4);
+  }
+
+  &[data-active]:hover {
+    background: var(--app-sidebar-active);
+  }
+}
+
+.linkIcon {
+  color: var(--app-sidebar-muted);
+
+  .link[data-active] &,
+  .link:hover & {
+    color: #ffffff;
+  }
+}
+
+.footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 16px;
+  font-size: 11px;
+  color: var(--app-sidebar-muted);
+}
+
+.header {
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-border);
+}
+
+.main {
+  background: var(--app-canvas);
+}
+
+.content {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.userButton {
+  padding: 4px 8px;
+  border-radius: var(--mantine-radius-sm);
+
+  &:hover {
+    background: var(--mantine-color-default-hover);
+  }
+}
