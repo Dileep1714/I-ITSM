@@ -18,5 +18,7 @@ public enum IncidentOperation {
     CLOSE,
     CANCEL,
     /** Cancel as a duplicate of another open incident (support staff; allowed until resolution). */
-    MARK_DUPLICATE
+    MARK_DUPLICATE,
+    /** A technician assigns an unassigned incident to themselves (any support level). */
+    TAKE
 }

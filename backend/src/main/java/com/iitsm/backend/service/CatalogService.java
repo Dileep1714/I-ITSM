@@ -15,7 +15,9 @@ import com.iitsm.backend.domain.incident.Priority;
 import com.iitsm.backend.domain.priority.PriorityCalculator;
 import com.iitsm.backend.domain.priority.PriorityFactors;
 import com.iitsm.backend.repository.CategoryRepository;
+import com.iitsm.backend.domain.user.Role;
 import com.iitsm.backend.repository.ItServiceRepository;
+import com.iitsm.backend.security.CurrentUserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,11 +33,13 @@ public class CatalogService {
     private final StrategyRegistry<PriorityCalculator> priorityCalculators;
     private final StrategyRegistry<AssignmentStrategy> assignmentStrategies;
     private final ItsmProperties.Assignment assignmentSettings;
+    private final CurrentUserService currentUser;
 
     public CatalogService(ItServiceRepository services, CategoryRepository categories,
                           StrategyRegistry<PriorityCalculator> priorityCalculators,
                           StrategyRegistry<AssignmentStrategy> assignmentStrategies,
-                          ItsmProperties.Assignment assignmentSettings) {
+                          ItsmProperties.Assignment assignmentSettings, CurrentUserService currentUser) {
+        this.currentUser = currentUser;
         this.services = services;
         this.categories = categories;
         this.priorityCalculators = priorityCalculators;
@@ -57,6 +61,10 @@ public class CatalogService {
                 .orElseThrow(() -> new ServiceNotFoundException(request.serviceId()));
         Priority priority = priorityCalculators.active().calculate(new PriorityFactors(
                 request.impact(), request.urgency(), service.getCriticality(), request.affectedUsers()));
+        // Employees filling in the form see which priority they will get, not how it is calculated.
+        if (currentUser.require().getRole() == Role.EMPLOYEE) {
+            return PriorityView.levelOnly(priority.getLevel());
+        }
         return new PriorityView(priority.getLevel(), priority.getLevel().label(), priority.getScore(),
                 priority.getRationale());
     }

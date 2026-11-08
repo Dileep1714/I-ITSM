@@ -16,11 +16,16 @@ public final class ItsmProperties {
     private ItsmProperties() {
     }
 
+    /**
+     * @param registrationDomains email domains allowed to self-register (e.g. {@code iitsm.example.com}); an empty
+     *                            list allows any domain. Accounts created by an administrator are not restricted.
+     */
     @ConfigurationProperties("iitsm.security")
     public record Security(String jwtSecret,
                            @DefaultValue("8h") Duration tokenLifetime,
                            @DefaultValue("http://localhost:5173") List<String> allowedOrigins,
-                           @DefaultValue("i-itsm") String issuer) {
+                           @DefaultValue("i-itsm") String issuer,
+                           @DefaultValue("iitsm.example.com") List<String> registrationDomains) {
 
         public static final int MIN_SECRET_LENGTH = 32;
 

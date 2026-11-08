@@ -15,6 +15,7 @@ import com.iitsm.backend.domain.incident.Incident;
 import com.iitsm.backend.domain.incident.Priority;
 import com.iitsm.backend.domain.incident.Resolution;
 import com.iitsm.backend.domain.sla.SlaTracker;
+import com.iitsm.backend.domain.user.Role;
 import com.iitsm.backend.domain.user.User;
 import org.springframework.stereotype.Component;
 
@@ -60,7 +61,7 @@ public class IncidentMapper {
                 new NamedRef(incident.getService().getId(), incident.getService().getName()),
                 incident.getCategory() != null
                         ? new NamedRef(incident.getCategory().getId(), incident.getCategory().getName()) : null,
-                priority(incident.getPriority()),
+                priority(incident.getPriority(), viewer),
                 sla(incident.getSla(), now),
                 incident.notesVisibleTo(viewer).stream()
                         .map(note -> new NoteView(note.getId(), person(note.getAuthor()), note.getText(),
@@ -83,9 +84,15 @@ public class IncidentMapper {
         return user == null ? null : new PersonRef(user.getId(), user.getFullName(), user.getRole());
     }
 
-    private static PriorityView priority(Priority priority) {
-        return priority == null ? null : new PriorityView(priority.getLevel(), priority.getLevel().label(),
-                priority.getScore(), priority.getRationale());
+    /** The score and its calculation are internal: support staff see them, the reporter sees only the level. */
+    private static PriorityView priority(Priority priority, User viewer) {
+        if (priority == null) {
+            return null;
+        }
+        return viewer.getRole() == Role.EMPLOYEE
+                ? PriorityView.levelOnly(priority.getLevel())
+                : new PriorityView(priority.getLevel(), priority.getLevel().label(), priority.getScore(),
+                priority.getRationale());
     }
 
     private static SlaView sla(SlaTracker sla, Instant now) {

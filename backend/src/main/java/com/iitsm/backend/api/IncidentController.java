@@ -89,6 +89,12 @@ public class IncidentController {
         return incidents.assign(id, request.technicianId());
     }
 
+    /** Take an unassigned incident for yourself (any technician). */
+    @PostMapping("/{id}/take")
+    public IncidentDetail take(@PathVariable Long id) {
+        return incidents.take(id);
+    }
+
     @PostMapping("/{id}/acknowledge")
     public IncidentDetail acknowledge(@PathVariable Long id) {
         return incidents.acknowledge(id);

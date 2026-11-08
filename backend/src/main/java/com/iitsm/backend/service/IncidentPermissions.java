@@ -38,7 +38,8 @@ public class IncidentPermissions {
         BY_ROLE.put(Role.TECHNICIAN, EnumSet.of(
                 IncidentOperation.CLASSIFY, IncidentOperation.ASSIGN, IncidentOperation.ACKNOWLEDGE,
                 IncidentOperation.START_WORK, IncidentOperation.REQUEST_INFO, IncidentOperation.RESOLVE,
-                IncidentOperation.CLOSE, IncidentOperation.CANCEL, IncidentOperation.MARK_DUPLICATE));
+                IncidentOperation.CLOSE, IncidentOperation.CANCEL, IncidentOperation.MARK_DUPLICATE,
+                IncidentOperation.TAKE));
         BY_ROLE.put(Role.ADMINISTRATOR, EnumSet.of(
                 IncidentOperation.CLASSIFY, IncidentOperation.ASSIGN, IncidentOperation.CLOSE,
                 IncidentOperation.CANCEL, IncidentOperation.MARK_DUPLICATE));

@@ -114,7 +114,7 @@ class IncidentLifecycleTest {
         incident.classify(application, p1Priority(), p1Policy, minutesAfterT0(1));
         assertThat(incident.allowedOperations())
                 .containsExactlyInAnyOrder(IncidentOperation.ASSIGN, IncidentOperation.CANCEL,
-                        IncidentOperation.MARK_DUPLICATE);
+                        IncidentOperation.MARK_DUPLICATE, IncidentOperation.TAKE);
 
         incident.assign(technician, 0, minutesAfterT0(2));
         assertThat(incident.allowedOperations())

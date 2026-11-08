@@ -31,6 +31,11 @@ abstract class AbstractIncidentState implements IncidentState {
     }
 
     @Override
+    public void take(Incident incident, Technician by, int technicianActiveIncidents, Instant now) {
+        throw reject(IncidentOperation.TAKE);
+    }
+
+    @Override
     public void acknowledge(Incident incident, Technician by, Instant now) {
         throw reject(IncidentOperation.ACKNOWLEDGE);
     }

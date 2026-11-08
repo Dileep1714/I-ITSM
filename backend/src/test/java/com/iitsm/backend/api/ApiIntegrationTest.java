@@ -196,6 +196,27 @@ class ApiIntegrationTest {
         }
 
         @Test
+        @DisplayName("Only work email domains may self-register, and no account is created otherwise")
+        void outsideDomainRejected() throws Exception {
+            mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"fullName": "Outsider", "email": "someone@gmail.com", "password": "Secret123"}
+                                    """))
+                    .andExpect(status().isUnprocessableContent())
+                    .andExpect(jsonPath("$.code").value("REGISTRATION_DOMAIN_NOT_ALLOWED"))
+                    .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("@test.com")));
+            mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"email\":\"someone@gmail.com\",\"password\":\"Secret123\"}"))
+                    .andExpect(status().isUnauthorized());
+            // A look-alike domain is not the work domain.
+            mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"fullName": "Sneaky", "email": "x@evil-test.com", "password": "Secret123"}
+                                    """))
+                    .andExpect(jsonPath("$.code").value("REGISTRATION_DOMAIN_NOT_ALLOWED"));
+        }
+
+        @Test
         @DisplayName("Registering an existing email is rejected")
         void duplicateEmailRejected() throws Exception {
             mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
@@ -234,12 +255,15 @@ class ApiIntegrationTest {
                 .andExpect(jsonPath("$.number", startsWith("INC-")))
                 .andExpect(jsonPath("$.status").value("ASSIGNED"))
                 .andExpect(jsonPath("$.priority.level").value("P1"))
-                .andExpect(jsonPath("$.priority.rationale").value(org.hamcrest.Matchers.containsString("MISSION_CRITICAL")))
+                // the reporter sees the level, never the internal calculation
+                .andExpect(jsonPath("$.priority.rationale").doesNotExist())
+                .andExpect(jsonPath("$.priority.score").doesNotExist())
                 .andExpect(jsonPath("$.assignee.fullName").value("Ravi Kumar"))
                 .andExpect(jsonPath("$.sla.status").value("ON_TRACK"))
                 .andExpect(jsonPath("$.allowedOperations", empty()));   // nothing for the reporter to do yet
 
         getAs(ravi, "/api/incidents/" + id)
+                .andExpect(jsonPath("$.priority.rationale").value(org.hamcrest.Matchers.containsString("MISSION_CRITICAL")))
                 .andExpect(jsonPath("$.allowedOperations", containsInAnyOrder("ACKNOWLEDGE", "MARK_DUPLICATE")));
 
         postAs(ravi, "/api/incidents/" + id + "/acknowledge", "")

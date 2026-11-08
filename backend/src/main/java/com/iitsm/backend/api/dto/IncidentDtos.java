@@ -96,7 +96,12 @@ public final class IncidentDtos {
     public record NamedRef(Long id, String name) {
     }
 
-    public record PriorityView(PriorityLevel level, String label, double score, String rationale) {
+    /** {@code score} and {@code rationale} are {@code null} for employees: the calculation is internal. */
+    public record PriorityView(PriorityLevel level, String label, Double score, String rationale) {
+
+        public static PriorityView levelOnly(PriorityLevel level) {
+            return new PriorityView(level, level.label(), null, null);
+        }
     }
 
     public record SlaView(SlaStatus status, Instant responseDue, Instant resolutionDue, Instant respondedAt,
@@ -127,6 +132,11 @@ public final class IncidentDtos {
             return new AuditEntryView(entry.getId(), entry.getIncidentNumber(), entry.getAction(),
                     entry.getPreviousStatus(), entry.getNewStatus(), entry.getDescription(),
                     entry.getActorName(), entry.getOccurredAt());
+        }
+
+        public AuditEntryView withDescription(String newDescription) {
+            return new AuditEntryView(id, incidentNumber, action, previousStatus, newStatus, newDescription, actorName,
+                    occurredAt);
         }
     }
 

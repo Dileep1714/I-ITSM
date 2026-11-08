@@ -41,6 +41,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Use cases for incidents: report, classify, assign, work, resolve, verify, close.
@@ -157,6 +158,15 @@ public class IncidentService {
         });
     }
 
+    /** The logged-in technician takes an unassigned incident from the queue (any support level). */
+    public IncidentDetail take(Long incidentId) {
+        return perform(incidentId, IncidentOperation.TAKE, (incident, user, now) -> {
+            Technician technician = asTechnician(user);
+            incident.take(technician, candidates.activeIncidentsOf(technician), now);
+            assignmentStrategies.active().onAssigned(technician);
+        });
+    }
+
     @Transactional(readOnly = true)
     public List<Recommendation> recommendations(Long incidentId) {
         User user = currentUser.require();
@@ -251,6 +261,7 @@ public class IncidentService {
         return auditEntries.findByIncidentIdOrderByOccurredAtAscIdAsc(incidentId).stream()
                 .filter(entry -> !employee || entry.isVisibleToReporter())
                 .map(AuditEntryView::of)
+                .map(view -> employee ? view.withDescription(withoutCalculation(view.description())) : view)
                 .toList();
     }
 
@@ -282,6 +293,14 @@ public class IncidentService {
     }
 
     // ----- helpers -----------------------------------------------------------------------------------------------
+
+    /** The bracketed priority formula that entries written before it became staff-only still contain. */
+    private static final Pattern PRIORITY_CALCULATION = Pattern.compile(" \\((Impact|Matrix: Impact) [^\\n]*\\)");
+
+    /** Removes the internal priority calculation from old history text (the audit log itself is never rewritten). */
+    static String withoutCalculation(String description) {
+        return description == null ? null : PRIORITY_CALCULATION.matcher(description).replaceAll("");
+    }
 
     /** A use-case step that changes an incident, given the current user and time. */
     @FunctionalInterface

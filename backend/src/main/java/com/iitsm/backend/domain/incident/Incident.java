@@ -230,6 +230,15 @@ public class Incident {
         state().assign(this, technician, technicianActiveIncidents, now);
     }
 
+    /**
+     * A technician picks an unassigned incident from the queue for themselves. Unlike {@link #assign} this is open
+     * to every support level, but only while nobody owns the incident: taking someone else's work is a reassignment,
+     * which stays with team leads and above.
+     */
+    public void take(Technician by, int technicianActiveIncidents, Instant now) {
+        state().take(this, by, technicianActiveIncidents, now);
+    }
+
     /** The assignee accepts the incident. This is the "response" for SLA purposes. */
     public void acknowledge(Technician by, Instant now) {
         state().acknowledge(this, by, now);
@@ -306,8 +315,10 @@ public class Incident {
         sla().retarget(slaPolicy);
         touch(now);
         if (previous != newPriority.getLevel()) {
+            // No calculation details here: this text reaches the reporter (history, notifications). Staff see the
+            // full rationale on the incident itself.
             record(IncidentEventType.PRIORITY_CHANGED, status, "Priority changed from " + previous + " to "
-                    + newPriority.getLevel() + " (" + newPriority.getRationale() + ")", true, now);
+                    + newPriority.getLevel() + " " + newPriority.getLevel().label(), true, now);
         }
     }
 
@@ -376,7 +387,7 @@ public class Incident {
         sla().start(slaPolicy, createdAt);
         transition(IncidentStatus.CLASSIFIED, now, IncidentEventType.CLASSIFIED,
                 "Classified as " + newCategory.getName() + ", priority " + newPriority.getLevel() + " "
-                        + newPriority.getLevel().label() + " (" + newPriority.getRationale() + ")", true);
+                        + newPriority.getLevel().label(), true);
     }
 
     void applyAssignment(Technician technician, int technicianActiveIncidents, Instant now) {

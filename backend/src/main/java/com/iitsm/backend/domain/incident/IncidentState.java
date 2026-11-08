@@ -28,6 +28,9 @@ interface IncidentState {
 
     void assign(Incident incident, Technician technician, int technicianActiveIncidents, Instant now);
 
+    /** A technician takes an unassigned incident for themselves. */
+    void take(Incident incident, Technician by, int technicianActiveIncidents, Instant now);
+
     void acknowledge(Incident incident, Technician by, Instant now);
 
     void startWork(Incident incident, Technician by, Instant now);

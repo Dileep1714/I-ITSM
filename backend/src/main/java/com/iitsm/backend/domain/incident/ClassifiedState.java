@@ -10,7 +10,8 @@ import java.util.Set;
 final class ClassifiedState extends AbstractIncidentState {
 
     private static final Set<IncidentOperation> ALLOWED = Set.copyOf(
-            EnumSet.of(IncidentOperation.MARK_DUPLICATE, IncidentOperation.ASSIGN, IncidentOperation.CANCEL));
+            EnumSet.of(IncidentOperation.MARK_DUPLICATE, IncidentOperation.ASSIGN, IncidentOperation.TAKE,
+                    IncidentOperation.CANCEL));
 
     @Override
     public IncidentStatus status() {
@@ -25,6 +26,12 @@ final class ClassifiedState extends AbstractIncidentState {
     @Override
     public void assign(Incident incident, Technician technician, int technicianActiveIncidents, Instant now) {
         incident.applyAssignment(technician, technicianActiveIncidents, now);
+    }
+
+    /** Only here: once someone owns the incident, moving it is a reassignment (team lead and above). */
+    @Override
+    public void take(Incident incident, Technician by, int technicianActiveIncidents, Instant now) {
+        incident.applyAssignment(by, technicianActiveIncidents, now);
     }
 
     @Override

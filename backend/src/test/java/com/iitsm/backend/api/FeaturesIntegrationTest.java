@@ -6,6 +6,7 @@ import com.iitsm.backend.domain.catalog.ItService;
 import com.iitsm.backend.domain.incident.PriorityLevel;
 import com.iitsm.backend.domain.sla.SlaPolicy;
 import com.iitsm.backend.domain.user.Administrator;
+import com.iitsm.backend.domain.user.Availability;
 import com.iitsm.backend.domain.user.Employee;
 import com.iitsm.backend.domain.user.PasswordHasher;
 import com.iitsm.backend.domain.user.SupportLevel;
@@ -407,6 +408,76 @@ class FeaturesIntegrationTest {
             getAs(ravi, "/api/me/profile").andExpect(jsonPath("$.availability").value("OFF_DUTY"));
             putAs(login("asha@test.com"), "/api/me/availability", "{\"availability\": \"BUSY\"}")
                     .andExpect(jsonPath("$.code").value("NOT_A_TECHNICIAN"));
+        }
+    }
+
+    // =============================================================================================================
+
+    @Nested
+    @DisplayName("Taking work and internal priority details")
+    class TakingAndPriorityPrivacy {
+
+        private void setAvailability(String email, Availability availability) {
+            ((Technician) users.findByEmail(email).orElseThrow()).changeAvailability(availability);
+        }
+
+        @Test
+        @DisplayName("Any technician can take an unassigned incident, but not one somebody already owns")
+        void takeFromQueue() throws Exception {
+            setAvailability("ravi@test.com", Availability.OFF_DUTY);
+            setAvailability("kavya@test.com", Availability.OFF_DUTY);
+            String body = postAs(login("asha@test.com"), "/api/incidents", """
+                    {"title": "Wi-Fi drops on floor 3", "description": "Wireless keeps disconnecting all day",
+                     "serviceId": %d, "categoryId": %d, "impact": "MEDIUM", "urgency": "MEDIUM"}
+                    """.formatted(vpnId, networkId))
+                    .andExpect(jsonPath("$.status").value("CLASSIFIED"))   // nobody was available to auto-assign
+                    .andReturn().getResponse().getContentAsString();
+            int id = JsonPath.read(body, "$.id");
+            setAvailability("ravi@test.com", Availability.AVAILABLE);
+            setAvailability("kavya@test.com", Availability.AVAILABLE);
+
+            String ravi = login("ravi@test.com");   // L1: may take, may not assign
+            getAs(ravi, "/api/incidents/" + id)
+                    .andExpect(jsonPath("$.allowedOperations", hasItem("TAKE")))
+                    .andExpect(jsonPath("$.allowedOperations", org.hamcrest.Matchers.not(hasItem("ASSIGN"))));
+            postAs(ravi, "/api/incidents/" + id + "/assign", "{\"technicianId\": " + raviId + "}")
+                    .andExpect(status().isForbidden());
+            postAs(login("asha@test.com"), "/api/incidents/" + id + "/take", "{}").andExpect(status().isForbidden());
+
+            postAs(ravi, "/api/incidents/" + id + "/take", "{}")
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("ASSIGNED"))
+                    .andExpect(jsonPath("$.assignee.fullName").value("Ravi Kumar"));
+
+            // Now it is Ravi's: taking it away is a reassignment, which only team leads may do (via assign).
+            postAs(login("kavya@test.com"), "/api/incidents/" + id + "/take", "{}")
+                    .andExpect(jsonPath("$.code").value("INVALID_STATE_TRANSITION"));
+        }
+
+        @Test
+        @DisplayName("Employees see the priority level, never the score or how it was calculated")
+        void priorityCalculationIsInternal() throws Exception {
+            String asha = login("asha@test.com");
+            int id = report(asha, "Checkout shows error 500", "Customers get error 500 at checkout", paymentId);
+
+            getAs(asha, "/api/incidents/" + id)
+                    .andExpect(jsonPath("$.priority.level").exists())
+                    .andExpect(jsonPath("$.priority.score").doesNotExist())
+                    .andExpect(jsonPath("$.priority.rationale").doesNotExist());
+            getAs(asha, "/api/incidents/" + id + "/history")
+                    .andExpect(jsonPath("$[*].description", org.hamcrest.Matchers.everyItem(
+                            org.hamcrest.Matchers.not(containsString("×")))));
+            getAs(login("ravi@test.com"), "/api/incidents/" + id)
+                    .andExpect(jsonPath("$.priority.rationale").value(containsString("×")));
+
+            String preview = """
+                    {"impact": "HIGH", "urgency": "HIGH", "serviceId": %d, "affectedUsers": 10}
+                    """.formatted(paymentId);
+            postAs(asha, "/api/priority/preview", preview)
+                    .andExpect(jsonPath("$.level").exists())
+                    .andExpect(jsonPath("$.rationale").doesNotExist());
+            postAs(login("ravi@test.com"), "/api/priority/preview", preview)
+                    .andExpect(jsonPath("$.rationale").exists());
         }
     }
 
