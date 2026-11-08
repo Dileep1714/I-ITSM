@@ -39,92 +39,102 @@
 
 ## MVP checklist (60 marks: do these first)
 
+Status as of 8 Nov 2026. Everything ticked is implemented **and** covered by automated tests
+(`backend/src/test`, 220+ test cases).
+
 ### Users & auth
-- [ ] Register / login (JWT)
-- [ ] Roles: Employee, Technician, Administrator (role-based authorization)
-- [ ] Password hashing (BCrypt)
-- [ ] Different UI per role, with navigation links between screens
+- [x] Register / login (JWT)
+- [x] Roles: Employee, Technician, Administrator (role-based authorization)
+- [x] Password hashing (BCrypt)
+- [x] Different UI per role, with navigation links between screens
 
 ### Incident management
-- [ ] Create / view / update / assign / resolve / close
-- [ ] Fields: ID, reporter, category, description, affected service, impact, urgency, priority,
+- [x] Create / view / update / assign / resolve / close
+- [x] Fields: ID, reporter, category, description, affected service, impact, urgency, priority,
       created time, status, assigned technician, SLA, investigation notes, resolution, closure info
-- [ ] Categories configurable by the admin (new ones need no code change)
+- [x] Categories configurable by the admin (new ones need no code change): Admin → Catalogue
 
 ### Lifecycle (State pattern)
-- [ ] NEW → CLASSIFIED → ASSIGNED → ACKNOWLEDGED → IN_PROGRESS → RESOLVED → VERIFIED → CLOSED
-- [ ] Invalid transitions rejected (for example NEW → CLOSED) with a custom exception
+- [x] NEW → CLASSIFIED → ASSIGNED → ACKNOWLEDGED → IN_PROGRESS → RESOLVED → VERIFIED → CLOSED
+      (plus ON_HOLD while waiting for the reporter, CANCELLED, and MARK_DUPLICATE until resolution)
+- [x] Invalid transitions rejected (for example NEW → CLOSED) with a custom exception
 
 ### Priority (Strategy pattern)
-- [ ] Automatic priority from impact, urgency, business criticality, affected users, service
-- [ ] P1–P4 mapping
+- [x] Automatic priority from impact, urgency, business criticality, affected users, service
+- [x] P1–P4 mapping (two calculators: weighted score, ITIL matrix; switchable at runtime)
 - [ ] Algorithm and rationale documented in the report
 
 ### Technician assignment (Strategy pattern)
-- [ ] At least 2 strategies (skill-based, load-based, round-robin…)
-- [ ] Admin can switch the strategy at runtime
-- [ ] Workload limit enforced (custom exception when exceeded)
+- [x] At least 2 strategies (smart composite, skill-based, load-based, experience-based, round-robin)
+- [x] Admin can switch the strategy at runtime
+- [x] Workload limit enforced (custom exception when exceeded)
 
 ### SLA
-- [ ] SLA policies per priority (and service), configurable by the admin
-- [ ] Response and resolution deadlines calculated
-- [ ] Response and resolution times tracked
-- [ ] Warning before a deadline; violation detected and recorded
-- [ ] Background monitor (`@Scheduled`)
+- [x] SLA policies per priority (and service), configurable by the admin: Admin → SLA policies
+- [x] Response and resolution deadlines calculated
+- [x] Response and resolution times tracked
+- [x] Warning before a deadline; violation detected and recorded
+- [x] Background monitor (`@Scheduled`)
 
 ### Notifications (Observer + Factory/Adapter)
-- [ ] At least 2 channels (in-app + email; SMS simulated)
-- [ ] Events: created, assigned, priority changed, SLA approaching, SLA violated, resolved, closed
-- [ ] Adding a new channel = adding one class
+- [x] At least 2 channels (in-app + email; SMS simulated)
+- [x] Events: created, assigned, priority changed, SLA approaching, SLA violated, resolved, closed
+- [x] Adding a new channel = adding one class
 
 ### Audit
-- [ ] Full history per incident: timestamp, user, action, incident ID, old state, new state, description
+- [x] Full history per incident: timestamp, user, action, incident ID, old state, new state, description
 
 ### Search & reporting
 - [x] At least 5 filters: ID, date range, status, priority, category, service, technician, SLA status
-- [ ] Reports: incident overview, technician workload, service analysis
+- [x] Reports: incident overview, technician workload, service analysis (Reports page, with charts)
 
-### Intelligent features (at least 2)
-- [ ] Duplicate / related incident detection (text similarity)
-- [ ] Automatic category suggestion from the description
-- [ ] SLA risk detection + automatic escalation (Technician → Team Lead → Sys Admin → IT Manager)
+### Intelligent features (at least 2) — all three done
+- [x] Duplicate / related incident detection (TF-IDF cosine similarity + service-graph bonus; one-click
+      "mark as duplicate"; past fixes suggested; a reporter's own repeat is refused with DUPLICATE_INCIDENT)
+- [x] Automatic category suggestion from the description (admin keywords + k-nearest past incidents; applied
+      automatically when confident, suggested live on the report form)
+- [x] SLA risk detection + automatic escalation (Technician → Team Lead → Sys Admin → IT Manager)
+- [x] Bonus: root-cause correlation (open incidents on services sharing a dependency) on the dashboard
 
 ### Persistence
-- [ ] PostgreSQL: users, services, incidents, technicians, SLA policies, audit records, resolutions
-- [ ] Sample/seed data
+- [x] PostgreSQL: users, services, incidents, technicians, SLA policies, audit records, resolutions
+- [x] Sample/seed data
 
 ### Employee features
-- [ ] Track status, add info, respond to info requests, view resolution, give feedback
+- [x] Track status, add info, respond to info requests, view resolution, give feedback
 
 ### Technician features
-- [ ] View assigned, acknowledge, investigation notes, request info, resolve, view workload
+- [x] View assigned, acknowledge, investigation notes, request info, resolve, view workload (My profile,
+      Reports), set own availability
 
 ### Admin features
-- [ ] Manage users, technicians, services, SLA policies, categories, assignment strategy
-- [ ] Monitor incidents, reports, audit logs, SLA violations
+- [x] Manage users, technicians, services, SLA policies, categories, assignment strategy
+- [x] Monitor incidents, reports, audit logs, SLA violations
 
 ---
 
 ## Error handling (custom exceptions)
-- [ ] Invalid login, unauthorized operation, invalid incident, invalid state transition
-- [ ] Technician unavailable, workload exceeded, service not found, missing SLA config
-- [ ] Duplicate incident, database failure, network failure, invalid input
-- [ ] Global exception handler returning consistent JSON errors
+- [x] Invalid login, unauthorized operation, invalid incident, invalid state transition
+- [x] Technician unavailable, workload exceeded, service not found, missing SLA config
+- [x] Duplicate incident, database failure, network failure, invalid input
+- [x] Global exception handler returning consistent JSON errors
 
-## Design patterns (at least 2 required; we plan 6)
-- [ ] State: incident lifecycle
-- [ ] Strategy: assignment, priority
-- [ ] Observer: notifications, audit
-- [ ] Factory: notification channels, users
-- [ ] Adapter: email/SMS providers
-- [ ] Repository: Spring Data JPA
+## Design patterns (at least 2 required; we use 7)
+- [x] State: incident lifecycle
+- [x] Strategy: assignment, priority
+- [x] Observer: notifications, audit, SLA violations, real-time push
+- [x] Factory: notification channels, users (admin user creation)
+- [x] Adapter: email/SMS providers
+- [x] Repository: Spring Data JPA
+- [x] Chain of Responsibility: escalation levels
 
 ## Innovation (extra marks)
-- [ ] Real-time operational dashboard (WebSocket)
-- [ ] Automated incident escalation
-- [ ] Incident similarity detection
-- [ ] Analytics & visualization (charts)
-- [ ] Docker / cloud deployment
+- [x] Real-time operational dashboard (WebSocket/STOMP, "Live" indicator)
+- [x] Automated incident escalation
+- [x] Incident similarity detection and root-cause correlation
+- [x] Analytics & visualization (charts on the Reports page)
+- [ ] Docker / cloud deployment (today: Docker Compose for PostgreSQL only; app containers not yet)
+- [x] CI: GitHub Actions runs backend tests on PostgreSQL and lints/builds the frontend
 - [ ] Stretch: PWA + push notifications
 
 ---

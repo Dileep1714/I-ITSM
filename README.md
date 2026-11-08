@@ -108,7 +108,7 @@ All endpoints are under `/api` and, except login and registration, need the head
 | `GET /api/auth/me` | logged in | Current user |
 | `GET /api/catalog/services`, `/categories` | logged in | Reference data for forms |
 | `POST /api/priority/preview` | logged in | Priority an incident would get, with explanation |
-| `POST /api/incidents` | employee | Report an incident (auto-prioritized and auto-assigned if a category is given) |
+| `POST /api/incidents` | employee | Report an incident. Without a category it is categorized automatically when the suggestion is confident; then prioritized and auto-assigned. A near-identical repeat of the reporter's own open incident is refused with `409 DUPLICATE_INCIDENT` unless `allowDuplicate: true` |
 | `GET /api/incidents` | logged in | Search, paged. No filters: my incidents (reported / assigned / all for admins). Filters: `q` (number, title, description), `status`, `priority`, `sla` (comma-separated), `serviceId`, `categoryId`, `assigneeId`, `unassigned=true`, `createdFrom`/`createdTo` (ISO instants), `scope=ALL` (staff: every incident). Employees only ever see their own |
 | `GET /api/incidents/{id}` | reporter, staff | Full detail, including `allowedOperations` for the current user |
 | `POST /api/incidents/{id}/classify` | staff | Set category; calculates priority and SLA |
@@ -118,6 +118,12 @@ All endpoints are under `/api` and, except login and registration, need the head
 | `POST …/provide-info`, `/accept`, `/reject` | reporter | Answer questions; verify the fix |
 | `POST …/close`, `/cancel` | staff (reporter may cancel) | Finish the incident |
 | `POST …/notes` | reporter, staff | Add a comment (internal notes: staff only) |
+| `GET /api/incidents/{id}/similar` | staff | Likely duplicates and similar incidents, with past fixes |
+| `POST /api/incidents/{id}/duplicate-of` | staff | Cancel as a duplicate of `{originalId}` (allowed until resolution) |
+| `POST /api/intelligence/analyze` | logged in | Category suggestions and "already reported?" hints for a draft (nothing saved) |
+| `GET /api/intelligence/correlations` | staff | Recent open incidents that share a likely root-cause service |
+| `GET /api/reports/overview`, `/technicians`, `/services` | staff | Reports for `from`/`to` (`yyyy-MM-dd`, default last 30 days). L1 technicians see only their own workload row |
+| `GET /api/me/profile`, `PUT /api/me/availability` | logged in / technician | Own profile; technicians set their availability |
 | `GET /api/incidents/{id}/history` | reporter, staff | Audit trail (reporters see only entries meant for them) |
 | `GET /api/notifications` (`?unreadOnly=true`) | logged in | My in-app notifications, newest first |
 | `GET /api/notifications/unread-count` | logged in | Number for the bell icon |
@@ -128,6 +134,14 @@ All endpoints are under `/api` and, except login and registration, need the head
 | `POST /api/admin/sla-monitor/run` | admin | Run the SLA monitor now (it also runs every minute) |
 | `GET /api/admin/strategies` | admin | Available priority and assignment strategies |
 | `PUT /api/admin/strategies/assignment`, `/priority` | admin | Switch strategy at runtime |
+| `GET/POST /api/admin/categories`, `PUT …/{id}` | admin | Categories and their categorization keywords |
+| `GET/POST /api/admin/services`, `PUT …/{id}` | admin | IT services, criticality, status and dependencies (cycles rejected) |
+| `GET/POST /api/admin/sla-policies`, `PUT/DELETE …/{id}` | admin | SLA targets per priority, optionally per service (generic policies cannot be deleted) |
+| `GET/POST /api/admin/users`, `PUT …/{id}`, `PUT …/{id}/technician`, `POST …/{id}/reset-password` | admin | Accounts of every role, activation, technician level/capacity/skills |
+
+**Real time:** STOMP over WebSocket at `/ws`. Send the token in the CONNECT frame's `Authorization` header.
+Staff may subscribe to `/topic/incidents` (every incident change); everyone gets `/user/queue/notifications`
+(their own new notifications). Messages are small "something changed" hints; clients refetch over REST.
 
 ## Everyday commands
 
@@ -156,6 +170,7 @@ All endpoints are under `/api` and, except login and registration, need the head
 
 ```
 I-ITSM/
+├── .github/workflows/ci.yml     CI: backend tests on PostgreSQL, frontend lint + build
 ├── docker-compose.yml           PostgreSQL for local development
 ├── docs/                        Plan and design documentation
 ├── frontend/                    React + Vite + Mantine web app
@@ -163,12 +178,21 @@ I-ITSM/
 │       ├── api/                 Typed API client and DTO types
 │       ├── auth/                Login state and role checks
 │       ├── components/          Layout, badges, tables, notification bell
-│       └── pages/               Screens per role (incident detail, admin pages…)
+│       ├── realtime/            WebSocket connection: live updates and the "Live" indicator
+│       └── pages/               Screens per role (incident detail, reports, admin pages…)
 └── backend/                     Spring Boot application
     └── src/
         ├── main/java/com/iitsm/backend/
+        │   ├── api/             REST controllers and request/response DTOs
         │   ├── common/          Exceptions, validation helpers, strategy registry
-        │   └── domain/          Domain model: users, catalog, incident lifecycle, SLA, priority, assignment
+        │   ├── domain/          Domain model: users, catalog, incident lifecycle, SLA, priority, assignment,
+        │   │                    escalation, intelligence (TF-IDF similarity, categorization, correlation)
+        │   ├── event/           Incident events and their observers (audit, SLA violations)
+        │   ├── notification/    Notification channels (in-app, email, SMS) and dispatcher
+        │   ├── realtime/        WebSocket/STOMP config, channel security, live broadcaster
+        │   ├── repository/      Spring Data repositories and search specifications
+        │   ├── security/        JWT, password hashing, security rules
+        │   └── service/         Use cases (incidents, intelligence, reports, administration)
         ├── main/resources/
         │   ├── application.properties
         │   └── db/migration/    Flyway SQL migrations (the database schema)
