@@ -44,6 +44,7 @@ export function RegisterPage() {
 
   return (
     <AuthLayout
+      variant="register"
       title="Create an employee account"
       subtitle="Report incidents and follow them to resolution. Support staff accounts are created by an administrator."
     >

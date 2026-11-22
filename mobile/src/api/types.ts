@@ -66,6 +66,7 @@ export type IncidentEventType =
   | 'CLOSED'
   | 'CANCELLED'
   | 'SLA_WARNING'
+  | 'SLA_BREACH_PREDICTED'
   | 'SLA_BREACHED'
   | 'ESCALATED';
 
@@ -259,7 +260,7 @@ export interface IncidentDetail {
   allowedOperations: IncidentOperation[];
 }
 
-/** A file (screenshot / photo) attached to an incident. Content: GET /api/attachments/{id}/content. */
+/** A photo attached to an incident. Content: GET /api/attachments/{id}/content. */
 export interface AttachmentView {
   id: number;
   fileName: string;
@@ -590,4 +591,99 @@ export interface ServiceRow {
 export interface ServiceReport {
   period: Period;
   services: ServiceRow[];
+}
+
+// ----- predictive SLA -----
+
+/** Will this open incident miss its resolution deadline? (GET /incidents/{id}/sla-forecast) */
+export interface SlaForecast {
+  incidentId: number;
+  number: string;
+  title: string;
+  priority: PriorityLevel | null;
+  status: IncidentStatus;
+  assigneeName: string | null;
+  /** 0..1 chance of missing the resolution deadline. */
+  probability: number;
+  risk: 'LOW' | 'MEDIUM' | 'HIGH';
+  expectedFinish: string;
+  deadline: string;
+  expectedRemainingMinutes: number;
+  sampleSize: number;
+  lowConfidence: boolean;
+  basis: string;
+  reasons: string[];
+}
+
+// ----- AI copilot (Gemini) -----
+
+export interface AiStatus {
+  available: boolean;
+  provider: string | null;
+}
+
+export interface ResolutionSuggestion {
+  summary: string;
+  steps: string[];
+  likelyCause: string;
+  /** Numbers of past incidents the suggestion drew on. */
+  basedOn: string[];
+  model: string;
+}
+
+export interface ChatTurn {
+  role: 'user' | 'assistant';
+  text: string;
+}
+
+export interface ReportDraft {
+  title: string | null;
+  description: string | null;
+  serviceId: number | null;
+  serviceName: string | null;
+  categoryId: number | null;
+  categoryName: string | null;
+  impact: Impact;
+  urgency: Urgency;
+  affectedUsers: number;
+}
+
+export interface ReportChatReply {
+  reply: string;
+  ready: boolean;
+  draft: ReportDraft | null;
+  model: string;
+}
+
+// ----- service map / status page -----
+
+export type ServiceHealthLevel = 'OPERATIONAL' | 'MAINTENANCE' | 'IMPACTED' | 'DEGRADED' | 'OUTAGE';
+
+export interface ServiceHealth {
+  id: number;
+  name: string;
+  description: string | null;
+  criticality: string;
+  status: string;
+  /** Effective health, including impact from services it depends on. */
+  health: ServiceHealthLevel;
+  ownHealth: ServiceHealthLevel;
+  reasons: string[];
+  impactedBy: string[];
+  /** Ids of the services it depends on. */
+  dependsOn: number[];
+  blastRadius: number;
+  openIncidents: number;
+  worstPriority: PriorityLevel | null;
+  breachedIncidents: number;
+}
+
+export interface SelfHelp {
+  knownIssue: string | null;
+  knownIssueHealth: ServiceHealthLevel | null;
+  canSelfFix: boolean;
+  steps: string[];
+  note: string | null;
+  pastFixes: number;
+  model: string | null;
 }

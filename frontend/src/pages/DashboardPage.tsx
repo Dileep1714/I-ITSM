@@ -1,35 +1,15 @@
-import { Anchor, Badge, Button, Group, Paper, SimpleGrid, Stack, Text, ThemeIcon, Title } from '@mantine/core';
-import { IconAlertTriangle, IconCircleCheck, IconTopologyStar3, IconClockExclamation, IconFlame, IconPlus, IconTicket } from '@tabler/icons-react';
+import { Anchor, Badge, Button, Group, Paper, Stack, Text, Title } from '@mantine/core';
+import { IconCircleCheck, IconPlus, IconTopologyStar3 } from '@tabler/icons-react';
 import { useQuery } from '@tanstack/react-query';
-import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import type { IncidentSearch } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
+import { QueueLedger, SectionHead } from '../components/Docket';
 import { IncidentTable } from '../components/IncidentTable';
 import { QueryState } from '../components/QueryState';
 import { LikelyToBreach } from '../components/SlaForecast';
 import { OPEN_STATUSES } from '../lib/format';
-
-function StatCard({ label, value, icon, color, to }: { label: string; value: number | undefined; icon: ReactNode; color: string; to: string }) {
-  return (
-    <Paper withBorder p="md" radius="md" component={Link} to={to} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <Group justify="space-between" wrap="nowrap" align="flex-start">
-        <div>
-          <Text size="xs" c="var(--app-ink-carbon)" tt="uppercase" fw={600} ff="var(--label-font)" style={{ letterSpacing: "0.1em" }}>
-            {label}
-          </Text>
-          <Text fw={700} fz={34} ff="monospace" lh={1.15}>
-            {value ?? '–'}
-          </Text>
-        </div>
-        <ThemeIcon color={color} variant="transparent" size={28}>
-          {icon}
-        </ThemeIcon>
-      </Group>
-    </Paper>
-  );
-}
 
 /** Counts one search on the server (only the total is used). */
 function useCount(filters: IncidentSearch) {
@@ -92,12 +72,15 @@ export function DashboardPage() {
         )}
       </Group>
 
-      <SimpleGrid cols={{ base: 2, md: 4 }}>
-        <StatCard label="Open" value={counts.open} color="carbon" icon={<IconTicket size={22} stroke={1.6} />} to={link({})} />
-        <StatCard label="High priority (P1/P2)" value={counts.critical} color="carbon" icon={<IconFlame size={22} stroke={1.6} />} to={link({ priority: 'P1,P2' })} />
-        <StatCard label="SLA at risk" value={counts.atRisk} color="carbon" icon={<IconClockExclamation size={22} stroke={1.6} />} to={link({ sla: 'AT_RISK' })} />
-        <StatCard label="SLA breached" value={counts.breached} color="stamp" icon={<IconAlertTriangle size={22} stroke={1.6} />} to={link({ sla: 'BREACHED' })} />
-      </SimpleGrid>
+      <QueueLedger
+        title={isEmployee ? 'Your reports' : user?.role === 'ADMINISTRATOR' ? 'Service desk' : 'Your queue'}
+        cells={[
+          { label: 'Open', value: counts.open, to: link({}), foot: isEmployee ? 'reported, not yet closed' : 'not yet closed' },
+          { label: 'High priority', value: counts.critical, to: link({ priority: 'P1,P2' }), foot: 'P1 and P2' },
+          { label: 'SLA at risk', value: counts.atRisk, to: link({ sla: 'AT_RISK' }), alarm: 'risk', foot: 'deadline close' },
+          { label: 'SLA breached', value: counts.breached, to: link({ sla: 'BREACHED' }), alarm: 'breach', foot: 'past the deadline' },
+        ]}
+      />
 
       {!isEmployee && <LikelyToBreach />}
 
@@ -146,24 +129,40 @@ export function DashboardPage() {
 
       {!isEmployee && (
         <Paper withBorder radius="md" p="md">
-          <Text fw={600} mb="sm">
-            Needs attention
-          </Text>
+          <SectionHead title="Needs attention" count={attention.data?.totalElements} />
           <QueryState query={attention}>
-            <IncidentTable incidents={attention.data?.content ?? []} emptyText="No SLA at risk or breached right now" />
+            <IncidentTable
+              incidents={attention.data?.content ?? []}
+              emptyStamp="All clear"
+              emptyText="Nothing at risk or past its deadline right now."
+            />
           </QueryState>
         </Paper>
       )}
 
       <Paper withBorder radius="md" p="md">
-        <Group justify="space-between" mb="sm">
-          <Text fw={600}>Recent incidents</Text>
-          <Anchor component={Link} to="/incidents" size="sm">
-            View all
-          </Anchor>
-        </Group>
+        <SectionHead
+          title="Recent incidents"
+          count={recent.data?.totalElements}
+          action={
+            <Anchor component={Link} to="/incidents" size="sm">
+              View all
+            </Anchor>
+          }
+        />
         <QueryState query={recent}>
-          <IncidentTable incidents={recent.data?.content ?? []} emptyText="No incidents yet" />
+          <IncidentTable
+            incidents={recent.data?.content ?? []}
+            emptyStamp="No dockets"
+            emptyText={isEmployee ? 'You have not reported anything yet.' : 'No incidents have been reported yet.'}
+            emptyAction={
+              isEmployee ? (
+                <Button component={Link} to="/incidents/new" leftSection={<IconPlus size={16} />}>
+                  Report an incident
+                </Button>
+              ) : undefined
+            }
+          />
         </QueryState>
       </Paper>
     </Stack>

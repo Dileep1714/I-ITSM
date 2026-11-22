@@ -6,6 +6,7 @@ import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture
 import type { IncidentSummary } from '../api/types';
 import { fromNow } from '../lib/format';
 import { PriorityDot, Row, SlaBadge, StatusBadge, T, type IconName } from './kit';
+import { MiniStrip } from './Docket';
 import { useColors } from './theme';
 
 export interface SwipeAction {
@@ -50,6 +51,7 @@ export function IncidentRow({ incident: i, swipe }: { incident: IncidentSummary;
           <StatusBadge status={i.status} />
           {(i.slaStatus === 'AT_RISK' || i.slaStatus === 'BREACHED') && <SlaBadge status={i.slaStatus} />}
         </Row>
+        <MiniStrip status={i.status} />
       </View>
     </Pressable>
   );

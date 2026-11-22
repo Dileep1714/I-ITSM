@@ -11,6 +11,7 @@ import { useQuickAction } from '../lib/quickActions';
 import { useLiveStatus } from '../realtime/LiveUpdates';
 import { IncidentRow } from '../ui/IncidentRow';
 import { Badge, Banner, Empty, Fab, ListRow, Loading, ProgressBar, Row, Section, T, type IconName } from '../ui/kit';
+import { Ledger, LedgerCell } from '../ui/Docket';
 import { LiveChip } from '../ui/LiveChip';
 import { hue, priorityHue, useColors } from '../ui/theme';
 
@@ -22,34 +23,38 @@ function useCount(filters: IncidentSearch) {
   }).data;
 }
 
-/** Tonal stat tile; tapping opens the incident list with the same filter. */
-function Stat({ label, value, icon, color, preset }: { label: string; value: string | number | undefined; icon: IconName; color: string; preset?: string }) {
-  const c = useColors();
+/** One count in the queue ledger; stamp-red counts (SLA at risk, breached) become alarms when non-zero. */
+function Stat({ label, value, color, preset }: { label: string; value: string | number | undefined; icon?: IconName; color: string; preset?: string }) {
+  const alarm = color === hue.red ? 'breach' : color === hue.orange ? 'risk' : undefined;
   return (
-    <Pressable
+    <LedgerCell
+      label={label}
+      value={value}
+      alarm={alarm}
       onPress={preset ? () => router.navigate({ pathname: '/incidents', params: { preset } }) : undefined}
-      disabled={!preset}
-      android_ripple={{ color: c.divider }}
-      style={[styles.stat, { backgroundColor: c.surface }]}
-      accessibilityRole={preset ? 'button' : undefined}
-      accessibilityLabel={`${label}: ${value ?? 'loading'}`}
-    >
-      <View style={[styles.statIcon, { backgroundColor: color + '22' }]}>
-        <Ionicons name={icon} size={18} color={color} />
-      </View>
-      <T style={{ fontSize: 26, fontWeight: '700' }}>{value ?? '–'}</T>
-      <T v="small" muted lines={1}>
-        {label}
-      </T>
-    </Pressable>
+    />
   );
 }
 
-function Stats({ children }: { children: ReactNode }) {
+function Stats({ title, children }: { title?: string; children: ReactNode }) {
+  return <Ledger title={title}>{children}</Ledger>;
+}
+
+/** Live service status in one row: all operational, or how many services have known issues. */
+function ServiceStatusRow() {
+  const health = useQuery({ queryKey: ['catalog', 'health'], queryFn: api.catalog.health, refetchInterval: 60_000 });
+  const issues = (health.data ?? []).filter((s) => s.health !== 'OPERATIONAL');
   return (
-    <Row wrap gap={10}>
-      {children}
-    </Row>
+    <Section title="SERVICE STATUS">
+      <ListRow
+        icon={issues.length ? 'warning-outline' : 'checkmark-circle-outline'}
+        iconColor={issues.length ? hue.red : undefined}
+        title={issues.length ? `${issues.length} known ${issues.length === 1 ? 'issue' : 'issues'}` : 'All systems operational'}
+        subtitle={issues.length ? issues.map((s) => s.name).join(', ') : 'Every IT service is working normally'}
+        onPress={() => router.push('/services')}
+        chevron
+      />
+    </Section>
   );
 }
 
@@ -110,10 +115,11 @@ export function EmployeeHome() {
 
   return (
     <HomeFrame title={`Hi, ${user?.fullName.split(' ')[0]}`} fab={<Fab label="Report" icon="add" onPress={() => router.push('/report')} />}>
-      <Stats>
+      <Stats title="Your reports">
         <Stat label="Open" value={openCount} icon="ticket-outline" color={hue.blue} preset="open" />
         <Stat label="Awaiting you" value={resolvedCount} icon="checkmark-done-outline" color={hue.teal} preset="resolved" />
       </Stats>
+      <ServiceStatusRow />
 
       {(awaiting.data?.content.length ?? 0) > 0 && (
         <>
@@ -138,7 +144,7 @@ export function EmployeeHome() {
           </Pressable>
         }
       >
-        {recent.isPending ? <Loading /> : recent.data?.content.length ? recent.data.content.map((i) => <IncidentRow key={i.id} incident={i} />) : <Empty text="You haven't reported anything yet. Tap Report to start." />}
+        {recent.isPending ? <Loading /> : recent.data?.content.length ? recent.data.content.map((i) => <IncidentRow key={i.id} incident={i} />) : <Empty stamp="No dockets" text="You haven't reported anything yet. Tap Report to start." />}
       </Section>
     </HomeFrame>
   );
@@ -167,12 +173,13 @@ export function TechnicianHome() {
 
   return (
     <HomeFrame title={`Hi, ${user?.fullName.split(' ')[0]}`}>
-      <Stats>
+      <Stats title="Your queue">
         <Stat label="My open" value={counts.open} icon="briefcase-outline" color={hue.blue} preset="open" />
         <Stat label="To acknowledge" value={counts.toAck} icon="hand-left-outline" color={hue.violet} preset="open" />
         <Stat label="SLA at risk" value={counts.atRisk} icon="time-outline" color={hue.orange} preset="atRisk" />
         <Stat label="Breached" value={counts.breached} icon="warning-outline" color={hue.red} preset="breached" />
       </Stats>
+      <ServiceStatusRow />
 
       <Section title="MY QUEUE · HIGHEST PRIORITY FIRST">
         {queue.isPending ? (
@@ -180,7 +187,7 @@ export function TechnicianHome() {
         ) : queue.data?.content.length ? (
           queue.data.content.map((i) => <IncidentRow key={i.id} incident={i} swipe={quickAction(i)} />)
         ) : (
-          <Empty icon="cafe-outline" text="Your queue is empty." />
+          <Empty stamp="Queue clear" text="Your queue is empty." />
         )}
       </Section>
 
@@ -214,7 +221,7 @@ export function AdminOverview() {
 
   return (
     <HomeFrame title="Operations">
-      <Stats>
+      <Stats title="Service desk">
         <Stat label="Open now" value={t?.openNow} icon="ticket-outline" color={hue.blue} preset="open" />
         <Stat label="SLA breached" value={t?.slaBreached} icon="warning-outline" color={hue.red} preset="breached" />
         <Stat label="SLA compliance" value={compliance == null ? '—' : `${Math.round(compliance)}%`} icon="shield-checkmark-outline" color={hue.teal} />
@@ -222,6 +229,7 @@ export function AdminOverview() {
         <Stat label="Avg response" value={fmtMinutes(t?.avgResponseMinutes)} icon="flash-outline" color={hue.violet} />
         <Stat label="Avg resolution" value={fmtMinutes(t?.avgResolutionMinutes)} icon="hourglass-outline" color={hue.grape} />
       </Stats>
+      <ServiceStatusRow />
 
       {overview.data && (
         <Section title="OPEN BY PRIORITY">
@@ -250,7 +258,7 @@ export function AdminOverview() {
         ) : unassigned.data?.content.length ? (
           unassigned.data.content.map((i) => <IncidentRow key={i.id} incident={i} />)
         ) : (
-          <Empty icon="checkmark-done-outline" text="Every open incident has an owner." />
+          <Empty stamp="All assigned" text="Every open incident has an owner." />
         )}
       </Section>
 

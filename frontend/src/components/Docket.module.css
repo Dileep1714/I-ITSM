@@ -1,0 +1,206 @@
+/*
+ * Docket devices reused across overview screens: the queue ledger (counts as typed figures on one ruled sheet),
+ * the miniature lifecycle strip in list rows, and stamped empty states. Same inks and rules as everywhere else.
+ */
+
+/* ---- Queue ledger ---- */
+.ledger {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+
+.ledgerHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--app-border);
+  font-family: 'Courier Prime', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--app-ink-carbon);
+}
+
+.ledgerCells {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+
+  @media (max-width: 48em) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.cell {
+  position: relative;
+  display: grid;
+  align-content: space-between;
+  gap: 10px;
+  min-height: 132px;
+  padding: 14px 18px 12px;
+  color: inherit;
+  text-decoration: none;
+  border-right: 1px solid var(--app-rule-faint);
+  transition: background-color 120ms ease-out;
+
+  &:last-child {
+    border-right: 0;
+  }
+
+  @media (max-width: 48em) {
+    &:nth-child(2) {
+      border-right: 0;
+    }
+
+    &:nth-child(-n + 2) {
+      border-bottom: 1px solid var(--app-rule-faint);
+    }
+  }
+
+  &:hover {
+    background: var(--app-canvas);
+  }
+}
+
+.cellLabel {
+  font-family: var(--label-font);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--app-ink-carbon);
+}
+
+.figure {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  font-size: clamp(40px, 5vw, 60px);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: var(--app-ink-carbon);
+  font-variant-numeric: tabular-nums;
+
+  /* Zeros recede but stay readable (large-text contrast above 3:1 in both themes). */
+  .cell[data-zero] & {
+    color: color-mix(in srgb, var(--app-ink-carbon) 55%, var(--app-surface));
+  }
+
+  .cell[data-alarm] & {
+    color: var(--app-stamp);
+  }
+}
+
+/* Non-zero alarms carry a stamp in the corner: single rule at risk, double rule breached. */
+.cornerStamp {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-family: var(--label-font);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--app-stamp);
+  border: 1.5px solid var(--app-stamp);
+  padding: 2px 6px;
+  transform: rotate(-4deg);
+
+  &[data-double] {
+    border: 3px double var(--app-stamp);
+  }
+}
+
+.cellFoot {
+  font-size: 12.5px;
+  color: var(--mantine-color-dimmed);
+}
+
+/* ---- Section heading with a typed count ---- */
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.sectionTitle {
+  font-size: 1.1875rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.sectionCount {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--app-ink-carbon);
+  margin-left: 10px;
+}
+
+/* ---- Miniature lifecycle strip ---- */
+.mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.tick {
+  width: 7px;
+  height: 7px;
+  border: 1px solid var(--app-border);
+
+  &[data-state='done'] {
+    background: var(--app-ink-carbon);
+    border-color: var(--app-ink-carbon);
+  }
+
+  /* In lists the current step is a larger carbon square; red stays for alarms (hold, breaches). */
+  &[data-state='now'] {
+    width: 11px;
+    height: 11px;
+    background: var(--app-ink-carbon);
+    border-color: var(--app-ink-carbon);
+    outline: 1.5px solid var(--app-surface);
+    outline-offset: -3px;
+  }
+
+  &[data-state='hold'] {
+    width: 11px;
+    height: 11px;
+    border: 1.5px dashed var(--app-stamp);
+  }
+
+  .mini[data-ended] & {
+    opacity: 0.45;
+  }
+}
+
+/* ---- Stamped empty state ---- */
+.empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 28px 16px 26px;
+  border: 1px dashed var(--app-border);
+  text-align: center;
+}
+
+.emptyStamp {
+  font-family: var(--label-font);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--app-ink-carbon);
+  border: 3px double var(--app-ink-carbon);
+  padding: 6px 14px;
+  transform: rotate(-3deg);
+}
+
+.emptyText {
+  font-size: 14px;
+  color: var(--mantine-color-dimmed);
+  max-width: 46ch;
+}

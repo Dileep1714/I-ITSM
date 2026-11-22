@@ -1,8 +1,8 @@
-import { Alert, Anchor, Button, Code, Group, Paper, PasswordInput, Stack, Text, TextInput } from '@mantine/core';
+import { Alert, Anchor, Button, Group, PasswordInput, Stack, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { AuthLayout } from '../components/AuthLayout';
 import { errorMessage } from '../lib/format';
@@ -50,58 +50,40 @@ export function LoginPage() {
       <form onSubmit={submit}>
         <Stack>
           {error && (
-            <Alert color="red" icon={<IconAlertCircle size={16} />}>
+            <Alert color="stamp" variant="outline" icon={<IconAlertCircle size={16} />}>
               {error}
             </Alert>
           )}
-          <TextInput label="Email" placeholder="you@company.com" autoComplete="username" {...form.getInputProps('email')} />
+          <TextInput label="Work email" placeholder="name@company.com" autoComplete="username" {...form.getInputProps('email')} />
           <PasswordInput label="Password" autoComplete="current-password" {...form.getInputProps('password')} />
-          <Button type="submit" loading={submitting} fullWidth mt="xs">
+          <Button type="submit" loading={submitting} fullWidth size="md" mt="xs">
             Sign in
           </Button>
-          <Text size="sm" c="dimmed" ta="center">
-            New employee?{' '}
-            <Anchor component={Link} to="/register">
-              Create an account
-            </Anchor>
-          </Text>
         </Stack>
       </form>
 
+      {/* Development builds only: never shown in the deployed app. */}
       {import.meta.env.DEV && (
-        <Paper withBorder p="md" mt="xl">
-          <Text size="xs" fw={600} tt="uppercase" c="dimmed" mb={6} style={{ letterSpacing: '0.04em' }}>
-            Demo accounts · password{' '}
-            <Code fz="xs" style={{ textTransform: 'none' }}>
-              Password123
-            </Code>
+        <div style={{ marginTop: 28, paddingTop: 12, borderTop: '1px dashed var(--app-border)' }}>
+          <Text size="xs" fw={700} c="dimmed" mb={6} ff="var(--label-font)" style={{ letterSpacing: '0.12em' }}>
+            DEVELOPMENT ONLY · PASSWORD123
           </Text>
-          {/* Role and email side by side when there is room, stacked on narrow phones. */}
-          <Stack gap={0}>
-            {DEMO_ACCOUNTS.map((a, index) => (
-              <Group
+          <Group gap={10}>
+            {DEMO_ACCOUNTS.map((a) => (
+              <Anchor
                 key={a.email}
-                justify="space-between"
-                gap={4}
-                py={5}
-                style={index ? { borderTop: '1px solid var(--app-border)' } : undefined}
+                component="button"
+                type="button"
+                size="xs"
+                ff="monospace"
+                title={a.role}
+                onClick={() => form.setValues({ email: a.email, password: 'Password123' })}
               >
-                <Text size="sm" c="dimmed">
-                  {a.role}
-                </Text>
-                <Anchor
-                  component="button"
-                  type="button"
-                  size="sm"
-                  ff="monospace"
-                  onClick={() => form.setValues({ email: a.email, password: 'Password123' })}
-                >
-                  {a.email}
-                </Anchor>
-              </Group>
+                {a.email.split('@')[0]}
+              </Anchor>
             ))}
-          </Stack>
-        </Paper>
+          </Group>
+        </div>
       )}
     </AuthLayout>
   );

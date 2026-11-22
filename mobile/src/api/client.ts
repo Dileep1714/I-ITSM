@@ -28,6 +28,13 @@ import type {
   Urgency,
   UserAdminView,
   UserView,
+  AiStatus,
+  ChatTurn,
+  ReportChatReply,
+  ResolutionSuggestion,
+  SelfHelp,
+  ServiceHealth,
+  SlaForecast,
 } from './types';
 
 const TOKEN_KEY = 'iitsm.token';
@@ -140,12 +147,17 @@ export const api = {
 
   catalog: {
     services: () => get<ServiceView[]>('/catalog/services'),
+    /** Service status: live health, dependencies and blast radius of every IT service. */
+    health: () => get<ServiceHealth[]>('/catalog/health'),
     categories: () => get<CategoryView[]>('/catalog/categories'),
     previewPriority: (req: { impact: Impact; urgency: Urgency; serviceId: number; affectedUsers: number }) =>
       post<PriorityView>('/priority/preview', req),
   },
 
   incidents: {
+    /** Undefined when no forecast applies (204). */
+    slaForecast: (id: number) => get<SlaForecast | undefined>(`/incidents/${id}/sla-forecast`),
+    aiSuggestion: (id: number) => post<ResolutionSuggestion>(`/incidents/${id}/ai-suggestion`),
     list: (page = 0, size = 20) => get<PageResponse<IncidentSummary>>(`/incidents${query({ page, size, sort: 'createdAt,desc' })}`),
     search: (filters: IncidentSearch, page = 0, size = 20, sort = 'createdAt,desc') =>
       get<PageResponse<IncidentSummary>>(
@@ -179,6 +191,11 @@ export const api = {
     addNote: (id: number, text: string, internal: boolean) => post<IncidentDetail>(`/incidents/${id}/notes`, { text, internal }),
   },
 
+  ai: {
+    status: () => get<AiStatus>('/ai/status'),
+    reportChat: (messages: ChatTurn[]) => post<ReportChatReply>('/ai/report-chat', { messages }),
+    selfHelp: (req: { title: string; description: string; serviceId: number | null }) => post<SelfHelp>('/ai/self-help', req),
+  },
   intelligence: {
     analyze: (req: { title: string; description?: string; serviceId?: number | null }) =>
       post<DraftAnalysis>('/intelligence/analyze', req),

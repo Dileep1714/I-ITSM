@@ -9,7 +9,9 @@ import { errorMessage, humanize } from '@/lib/format';
 import { buzz } from '@/lib/haptics';
 import { pickPhoto, type PickedPhoto } from '@/lib/photos';
 import { useActionMenu } from '@/ui/actionMenu';
-import { Badge, Banner, Button, Card, Chips, Input, PriorityBadge, Row, StatusBadge, T } from '@/ui/kit';
+import { Badge, Banner, Button, Card, Chips, Input, PriorityBadge, Row, Segmented, StatusBadge, T } from '@/ui/kit';
+import { BeforeYouReport, ReportChat, useAiAvailable } from '@/ui/ReportAssist';
+import type { ReportDraft } from '@/api/types';
 import { hue, useColors } from '@/ui/theme';
 import { useToast } from '@/ui/toast';
 
@@ -51,6 +53,19 @@ export default function ReportScreen() {
   const [affectedUsers, setAffectedUsers] = useState('1');
   const [photos, setPhotos] = useState<PickedPhoto[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const aiAvailable = useAiAvailable();
+  const [mode, setMode] = useState<'form' | 'chat'>('form');
+  /** The assistant's draft fills the form; the employee reviews and submits it. */
+  const useDraft = (d: ReportDraft) => {
+    if (d.title) setTitle(d.title);
+    if (d.description) setDescription(d.description);
+    if (d.serviceId != null) setServiceId(d.serviceId);
+    if (d.categoryId != null) setCategoryId(d.categoryId);
+    setImpact(d.impact);
+    setUrgency(d.urgency);
+    setAffectedUsers(String(d.affectedUsers || 1));
+    setMode('form');
+  };
 
   const previewInput = useDebounced({ serviceId, impact, urgency, affectedUsers: Number(affectedUsers) || 1 }, 300);
   const preview = useQuery({
@@ -143,6 +158,21 @@ export default function ReportScreen() {
         <ScrollView contentContainerStyle={{ padding: 16, gap: 18 }} keyboardShouldPersistTaps="handled">
           {otherError && <Banner tone="danger" title="Could not report the incident">{errorMessage(report.error)}</Banner>}
 
+          {aiAvailable && (
+            <Segmented
+              options={[
+                { value: 'form', label: 'Fill in the form' },
+                { value: 'chat', label: 'Chat with assistant' },
+              ]}
+              value={mode}
+              onChange={setMode}
+            />
+          )}
+          {mode === 'chat' && aiAvailable ? (
+            <ReportChat onUseDraft={useDraft} />
+          ) : (
+          <>
+
           <Input label="What's wrong?" value={title} onChangeText={setTitle} placeholder="e.g. Cannot connect to VPN" error={errors.title} maxLength={150} autoFocus />
           <Input
             label="Details"
@@ -233,6 +263,7 @@ export default function ReportScreen() {
             onChange={setServiceId}
             hint={errors.service ? <T v="small" color={c.danger}>{errors.service}</T> : undefined}
           />
+          <BeforeYouReport title={title} description={description} serviceId={serviceId} onFixed={() => router.back()} />
           <Chips
             label="Category (optional)"
             options={(categories.data ?? []).filter((x) => x.active).map((x) => ({ value: x.id, label: x.name }))}
@@ -259,6 +290,8 @@ export default function ReportScreen() {
           )}
 
           <Button label="Submit incident" icon="send" onPress={submit} loading={report.isPending} />
+          </>
+          )}
           <View style={{ height: 24 }} />
         </ScrollView>
       </KeyboardAvoidingView>

@@ -33,6 +33,7 @@ import {
   T,
   type IconName,
 } from '@/ui/kit';
+import { AiFixCard, SlaForecastCard } from '@/ui/IncidentInsights';
 import { StampStrip } from '@/ui/StampStrip';
 import { hue, useColors } from '@/ui/theme';
 import { useToast } from '@/ui/toast';
@@ -241,6 +242,9 @@ export default function IncidentScreen() {
           </T>
           <T>{i.description}</T>
         </Card>
+
+        {user.role !== 'EMPLOYEE' && <SlaForecastCard incidentId={i.id} />}
+        {user.role !== 'EMPLOYEE' && !['RESOLVED', 'VERIFIED', 'CLOSED', 'CANCELLED'].includes(i.status) && <AiFixCard incidentId={i.id} />}
 
         {i.resolution && (
           <Card style={{ gap: 8, borderWidth: 1.5, borderColor: c.primary }}>

@@ -3,20 +3,28 @@ import { useMediaQuery } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import type { IncidentSummary } from '../api/types';
 import { fromNow } from '../lib/format';
+import type { ReactNode } from 'react';
 import { PriorityBadge, SlaBadge, StatusBadge } from './Badges';
+import { MiniStrip, StampedEmpty } from './Docket';
 import classes from './IncidentTable.module.css';
 
 /** Incident list: a full table on tablets and desktops, one tappable card per incident on phones. */
-export function IncidentTable({ incidents, emptyText = 'No incidents' }: { incidents: IncidentSummary[]; emptyText?: string }) {
+export function IncidentTable({
+  incidents,
+  emptyText = 'No incidents',
+  emptyStamp = 'No dockets',
+  emptyAction,
+}: {
+  incidents: IncidentSummary[];
+  emptyText?: string;
+  emptyStamp?: string;
+  emptyAction?: ReactNode;
+}) {
   const navigate = useNavigate();
   const phone = useMediaQuery('(max-width: 48em)'); // below Mantine's "sm" breakpoint
 
   if (incidents.length === 0) {
-    return (
-      <Text c="dimmed" ta="center" py="xl">
-        {emptyText}
-      </Text>
-    );
+    return <StampedEmpty stamp={emptyStamp} text={emptyText} action={emptyAction} />;
   }
 
   if (phone) {
@@ -41,6 +49,7 @@ export function IncidentTable({ incidents, emptyText = 'No incidents' }: { incid
                 <StatusBadge status={i.status} />
                 <SlaBadge status={i.slaStatus} />
               </Group>
+              <MiniStrip status={i.status} />
               <Text size="xs" c="dimmed" lineClamp={1}>
                 {i.serviceName} · {i.assigneeName ?? 'Unassigned'}
               </Text>
@@ -87,6 +96,9 @@ export function IncidentTable({ incidents, emptyText = 'No incidents' }: { incid
               </Table.Td>
               <Table.Td>
                 <StatusBadge status={i.status} />
+                <div>
+                  <MiniStrip status={i.status} />
+                </div>
               </Table.Td>
               <Table.Td>
                 <SlaBadge status={i.slaStatus} />

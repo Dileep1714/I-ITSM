@@ -120,7 +120,7 @@ export default function IncidentsScreen() {
             )}
           </View>
         }
-        ListEmptyComponent={incidents.isPending ? <Loading /> : <Empty text={q ? 'No incidents match your search' : 'Nothing here'} />}
+        ListEmptyComponent={incidents.isPending ? <Loading /> : <Empty stamp={q ? 'No match' : 'No dockets'} text={q ? 'No incidents match your search' : 'Nothing here yet'} />}
         ListFooterComponent={incidents.isFetchingNextPage ? <Loading /> : <View style={{ height: role === 'EMPLOYEE' ? 96 : 32 }} />}
         onEndReached={() => incidents.hasNextPage && !incidents.isFetchingNextPage && void incidents.fetchNextPage()}
         onEndReachedThreshold={0.4}

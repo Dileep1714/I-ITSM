@@ -110,7 +110,7 @@ export default function NotificationsScreen() {
             </T>
           ) : undefined
         }
-        ListEmptyComponent={list.isPending ? <Loading /> : <Empty icon="notifications-off-outline" text="You're all caught up" />}
+        ListEmptyComponent={list.isPending ? <Loading /> : <Empty stamp="All caught up" text="No new notifications." />}
         refreshControl={<RefreshControl refreshing={list.isRefetching} onRefresh={refresh} tintColor={c.primary} colors={[c.primary]} />}
         renderItem={({ item: n }) => (
           <NotificationItem

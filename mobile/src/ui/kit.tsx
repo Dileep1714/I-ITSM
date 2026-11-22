@@ -23,6 +23,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { IncidentStatus, PriorityLevel, SlaStatus } from '../api/types';
 import { humanize } from '../lib/format';
+import { StampedEmpty } from './Docket';
 import { FIGURE, useColors } from './theme';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -210,18 +211,9 @@ export function Loading() {
   );
 }
 
-export function Empty({ icon = 'file-tray-outline', text }: { icon?: IconName; text: string }) {
-  const c = useColors();
-  return (
-    <View style={{ alignItems: 'center', padding: 32, gap: 10 }}>
-      <View style={[styles.emptyIcon, { backgroundColor: c.surfaceAlt }]}>
-        <Ionicons name={icon} size={28} color={c.muted} />
-      </View>
-      <T muted v="small" style={{ textAlign: 'center' }}>
-        {text}
-      </T>
-    </View>
-  );
+/** Empty state as a blank ruled area with a rubber stamp (the docket's empty sheet). */
+export function Empty({ text, stamp = 'Nothing here' }: { icon?: IconName; text: string; stamp?: string }) {
+  return <StampedEmpty stamp={stamp} text={text} />;
 }
 
 /** Initials box: a square filled with the signed-in role's accent (or a given colour). */

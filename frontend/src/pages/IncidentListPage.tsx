@@ -13,7 +13,7 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
-import { useDebouncedValue, useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { useDebouncedValue, useDisclosure } from '@mantine/hooks';
 import { IconFilter, IconFilterOff, IconPlus, IconSearch } from '@tabler/icons-react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
@@ -96,8 +96,8 @@ export function IncidentListPage() {
 
   const hasFilters = KEYS.some((k) => k !== 'scope' && params.get(k));
   const filterCount = KEYS.filter((k) => k !== 'scope' && k !== 'q' && params.get(k)).length;
-  const phone = useMediaQuery('(max-width: 48em)');
-  const [filtersOpen, { toggle: toggleFilters }] = useDisclosure(false);
+  // Filters fold away behind one button so incidents lead the page; they open by themselves when one is active.
+  const [filtersOpen, { toggle: toggleFilters }] = useDisclosure(hasFilters);
   const clear = () => {
     setText('');
     setParams(params.get('scope') ? { scope: params.get('scope')! } : {}, { replace: true });
@@ -140,9 +140,7 @@ export function IncidentListPage() {
               value={text}
               onChange={(e) => setText(e.currentTarget.value)}
             />
-            {/* Phones: the eight filters fold away behind one button so incidents show on the first screen. */}
             <Button
-              hiddenFrom="sm"
               variant={filterCount ? 'light' : 'default'}
               leftSection={<IconFilter size={16} />}
               onClick={toggleFilters}
@@ -151,7 +149,7 @@ export function IncidentListPage() {
               {filterCount ? `Filters (${filterCount})` : 'Filters'}
             </Button>
           </Group>
-          <Collapse expanded={!phone || filtersOpen}>
+          <Collapse expanded={filtersOpen}>
           <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="sm">
             <MultiSelect
               label="Status"
@@ -214,7 +212,8 @@ export function IncidentListPage() {
         <QueryState query={incidents}>
           <IncidentTable
             incidents={data?.content ?? []}
-            emptyText={hasFilters ? 'No incidents match the filters' : 'No incidents yet'}
+            emptyStamp={hasFilters ? 'No match' : 'No dockets'}
+            emptyText={hasFilters ? 'No incidents match these filters.' : 'No incidents yet.'}
           />
         </QueryState>
       </Paper>
