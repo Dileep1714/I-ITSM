@@ -10,7 +10,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.0.130:5173"
+        "EXPO_PUBLIC_API_URL": "https://iitsm-o69p.onrender.com"
       }
     },
     "production": {
