@@ -12,6 +12,7 @@ import { PriorityBadge, StatusBadge } from '../components/Badges';
 import { errorMessage, humanize } from '../lib/format';
 import classes from './ReportIncidentPage.module.css';
 import { AiReportChat } from '../components/AiCopilot';
+import { SelfHelp } from '../components/SelfHelp';
 import { useAiAvailable } from '../lib/useAiAvailable';
 import type { ReportDraft } from '../api/types';
 
@@ -242,6 +243,7 @@ export function ReportIncidentPage() {
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 4 }}>
           <Stack>
+            <SelfHelp title={title} description={description} serviceId={serviceId} />
             <Card withBorder radius="md">
               <Group gap="xs" mb="xs">
                 <IconBolt size={18} />

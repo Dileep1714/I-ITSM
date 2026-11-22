@@ -1,0 +1,285 @@
+/* Service map in the docket world: services are ruled boxes; trouble is stamp red (double rule = outage,
+   single = degraded, dashed = impacted from upstream); red edges carry a problem up to its dependents. */
+.status {
+  border-color: var(--app-stamp);
+  border-width: 2px;
+
+  &[data-ok] {
+    border-color: var(--app-border);
+    border-width: 1px;
+  }
+}
+
+.issues {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.issueButton {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 6px 4px;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--app-canvas);
+  }
+
+  @media (max-width: 40em) {
+    grid-template-columns: auto 1fr;
+
+    & .issueWhy {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.issueName {
+  font-weight: 700;
+}
+
+.issueWhy {
+  font-size: 14px;
+  color: var(--mantine-color-dimmed);
+}
+
+.healthMark {
+  display: inline-block;
+  font-family: var(--label-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  white-space: nowrap;
+  border: 1px solid var(--app-ink-carbon);
+  color: var(--app-ink-carbon);
+
+  &[data-health='OUTAGE'] {
+    border: 3px double var(--app-stamp);
+    color: var(--app-stamp);
+  }
+
+  &[data-health='DEGRADED'] {
+    border: 2px solid var(--app-stamp);
+    color: var(--app-stamp);
+  }
+
+  &[data-health='IMPACTED'] {
+    border: 1.5px dashed var(--app-stamp);
+    color: var(--app-stamp);
+  }
+
+  &[data-health='MAINTENANCE'] {
+    border-style: dashed;
+  }
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 16px;
+  align-items: start;
+
+  @media (max-width: 62em) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mapWrap {
+  overflow-x: auto;
+}
+
+.map {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Nodes */
+.node {
+  cursor: pointer;
+  outline: none;
+  transition: opacity 160ms ease-out;
+
+  &[data-dim] {
+    opacity: 0.28;
+  }
+
+  &:focus-visible .nodeBox {
+    stroke-width: 3;
+  }
+}
+
+.nodeBox {
+  fill: var(--app-surface);
+  stroke: var(--app-ink-carbon);
+  stroke-width: 1;
+
+  .node[data-health='DEGRADED'] & {
+    stroke: var(--app-stamp);
+    stroke-width: 2;
+  }
+
+  .node[data-health='OUTAGE'] & {
+    stroke: var(--app-stamp);
+    stroke-width: 1.5;
+  }
+
+  .node[data-health='IMPACTED'] & {
+    stroke: var(--app-stamp);
+    stroke-dasharray: 5 4;
+  }
+
+  .node[data-health='MAINTENANCE'] & {
+    stroke-dasharray: 5 4;
+  }
+
+  .node[data-selected] & {
+    fill: var(--app-canvas);
+    stroke-width: 2.5;
+  }
+}
+
+.nodeInner {
+  fill: none;
+  stroke: var(--app-stamp);
+  stroke-width: 1.5;
+}
+
+.nodeName {
+  font-family: 'Archivo', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  fill: var(--app-ink);
+}
+
+.nodeHealth {
+  font-family: 'Archivo Narrow', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  fill: var(--app-ink-carbon);
+
+  .node[data-health='OUTAGE'] &,
+  .node[data-health='DEGRADED'] &,
+  .node[data-health='IMPACTED'] & {
+    fill: var(--app-stamp);
+  }
+}
+
+/* Edges */
+.edge {
+  fill: none;
+  stroke: var(--app-border);
+  stroke-width: 1.5;
+  transition: opacity 160ms ease-out;
+
+  &[data-bad] {
+    stroke: var(--app-stamp);
+    stroke-width: 2;
+    stroke-dasharray: 7 6;
+  }
+
+  &[data-dim] {
+    opacity: 0.15;
+  }
+}
+
+/* The problem travels upward along red edges (from the dependency toward its dependents). */
+@media (prefers-reduced-motion: no-preference) {
+  .edge[data-bad] {
+    animation: impact 1.4s linear infinite;
+  }
+}
+
+@keyframes impact {
+  to {
+    stroke-dashoffset: 26;
+  }
+}
+
+.arrow {
+  fill: var(--app-border);
+}
+
+.arrowBad {
+  fill: var(--app-stamp);
+}
+
+.legend {
+  padding: 10px 16px;
+  border-top: 1px solid var(--app-rule-faint);
+  font-size: 13px;
+  color: var(--mantine-color-dimmed);
+}
+
+/* Details panel */
+.panel {
+  position: sticky;
+  top: 72px;
+}
+
+.reasons {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.facts {
+  display: grid;
+  border-top: 1px solid var(--app-rule-faint);
+
+  & > div {
+    display: grid;
+    gap: 2px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--app-rule-faint);
+    font-size: 14px;
+  }
+}
+
+.label {
+  font-family: var(--label-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--app-ink-carbon);
+}
+
+.figureRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.figure {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--app-ink-carbon);
+}
+
+.breached {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--app-stamp);
+}
+
+.link {
+  font-weight: 600;
+  color: var(--app-ink-carbon);
+}

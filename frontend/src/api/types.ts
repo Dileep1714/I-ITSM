@@ -654,3 +654,36 @@ export interface ReportChatReply {
   draft: ReportDraft | null;
   model: string;
 }
+
+// ----- service map / status page -----
+
+export type ServiceHealthLevel = 'OPERATIONAL' | 'MAINTENANCE' | 'IMPACTED' | 'DEGRADED' | 'OUTAGE';
+
+export interface ServiceHealth {
+  id: number;
+  name: string;
+  description: string | null;
+  criticality: string;
+  status: string;
+  /** Effective health, including impact from services it depends on. */
+  health: ServiceHealthLevel;
+  ownHealth: ServiceHealthLevel;
+  reasons: string[];
+  impactedBy: string[];
+  /** Ids of the services it depends on. */
+  dependsOn: number[];
+  blastRadius: number;
+  openIncidents: number;
+  worstPriority: PriorityLevel | null;
+  breachedIncidents: number;
+}
+
+export interface SelfHelp {
+  knownIssue: string | null;
+  knownIssueHealth: ServiceHealthLevel | null;
+  canSelfFix: boolean;
+  steps: string[];
+  note: string | null;
+  pastFixes: number;
+  model: string | null;
+}

@@ -30,6 +30,7 @@ import {
   IconSettings,
   IconSun,
   IconTicket,
+  IconTopologyStar3,
   IconUser,
   IconUsers,
 } from '@tabler/icons-react';
@@ -68,6 +69,7 @@ const NAV: NavSection[] = [
       { label: 'Report incident', to: '/incidents/new', icon: IconPlus, roles: ['EMPLOYEE'] },
       { label: 'Incidents', to: '/incidents', icon: IconTicket, roles: ALL },
       { label: 'Notifications', to: '/notifications', icon: IconBell, roles: ALL },
+      { label: 'Service map', to: '/services', icon: IconTopologyStar3, roles: ALL },
       { label: 'Reports', to: '/reports', icon: IconChartBar, roles: STAFF },
     ],
   },

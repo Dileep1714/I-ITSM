@@ -11,10 +11,23 @@ auditing and intelligent automation.
 | [`requirements.md`](requirements.md) | Project specification |
 | [`docs/PLAN.md`](docs/PLAN.md) | Tech stack, timeline and requirements checklist |
 | [`docs/DOMAIN_MODEL.md`](docs/DOMAIN_MODEL.md) | Class diagrams, design patterns and design decisions |
+| [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Everything built, by date |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Cloud deployment: Docker on a VM, or Render (free) |
+| [`PRODUCT.md`](PRODUCT.md) · [`DESIGN.md`](DESIGN.md) | Product brief and the "Service Docket" design system |
 
 ## Tech stack
 
-Java 21+ · Spring Boot 4 · PostgreSQL 18 · Flyway · React 19 + TypeScript + Mantine (frontend) · Docker
+Java 21+ · Spring Boot 4 · PostgreSQL 18 · Flyway · React 19 + TypeScript + Mantine (web, PWA) · React Native + Expo (Android/iOS) · Google Gemini API (AI copilot) · Docker · Render
+
+## Highlights
+
+- **Incident lifecycle** (State pattern), **priority** and **assignment** strategies (Strategy), **escalation** (Chain of Responsibility), **notifications and audit** (Observer), SLA tracking and monitoring.
+- **Intelligence**: TF-IDF categorisation, duplicate and similar-incident detection, root-cause correlation.
+- **Predictive SLA**: breach probability for every open incident, learned from past resolution times, with an early warning before the deadline.
+- **AI copilot (Google Gemini)**: hybrid classification, fix suggestions from similar resolved incidents, a chat assistant that prepares reports, and self-help before reporting. Works without a key (falls back gracefully).
+- **Service map and status page**: live health of every IT service, impact spreading along dependencies, blast radius, known issues for employees.
+- **Real time** (STOMP over WebSocket), **photo attachments**, installable **PWA**, native **mobile app**.
+- **Deployment**: Docker Compose for any server, a Render Blueprint for free hosting.
 
 ## Getting started
 
@@ -142,6 +155,20 @@ All endpoints are under `/api` and, except login and registration, need the head
 **Real time:** STOMP over WebSocket at `/ws`. Send the token in the CONNECT frame's `Authorization` header.
 Staff may subscribe to `/topic/incidents` (every incident change); everyone gets `/user/queue/notifications`
 (their own new notifications). Messages are small "something changed" hints; clients refetch over REST.
+
+### AI endpoints and predictive SLA
+
+| Method & path | Who | Purpose |
+|---|---|---|
+| `GET /api/ai/status` | logged in | Whether the AI copilot is configured |
+| `POST /api/ai/report-chat` | logged in | One turn of the reporting chat assistant; returns a draft to review |
+| `POST /api/ai/self-help` | logged in | Known issues on the chosen service and safe steps to try before reporting |
+| `POST /api/incidents/{id}/ai-suggestion` | staff | Fix steps from similar resolved incidents |
+| `GET /api/incidents/{id}/sla-forecast` | staff | Breach probability, expected finish and reasons (204 when not applicable) |
+| `GET /api/intelligence/sla-forecasts?minRisk=MEDIUM` | staff | Open incidents most likely to breach |
+| `GET /api/catalog/health` | logged in | Service map: live health, dependencies, blast radius |
+
+**Enabling the AI copilot locally:** get a free key at https://aistudio.google.com ("Get API key") and put it in `backend/ai.local.properties` (git-ignored) as `iitsm.ai.gemini.api-key=...`. Without a key every AI feature is hidden and the app uses its keyword-based intelligence.
 
 ## Everyday commands
 

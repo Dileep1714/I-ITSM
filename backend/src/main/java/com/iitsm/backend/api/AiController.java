@@ -4,6 +4,8 @@ import com.iitsm.backend.api.dto.AiDtos.AiStatus;
 import com.iitsm.backend.api.dto.AiDtos.ReportChatReply;
 import com.iitsm.backend.api.dto.AiDtos.ReportChatRequest;
 import com.iitsm.backend.api.dto.AiDtos.ResolutionSuggestion;
+import com.iitsm.backend.api.dto.AiDtos.SelfHelpRequest;
+import com.iitsm.backend.api.dto.AiDtos.SelfHelpView;
 import com.iitsm.backend.service.AiCopilotService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +34,12 @@ public class AiController {
     @PostMapping("/api/incidents/{id}/ai-suggestion")
     public ResolutionSuggestion suggestResolution(@PathVariable Long id) {
         return copilot.suggestResolution(id);
+    }
+
+    /** Before reporting: known issues on the chosen service and (with AI) safe steps to try first. */
+    @PostMapping("/api/ai/self-help")
+    public SelfHelpView selfHelp(@Valid @RequestBody SelfHelpRequest request) {
+        return copilot.selfHelp(request.title(), request.description(), request.serviceId());
     }
 
     /** One turn of the chat-based reporting assistant; returns a draft to review once it knows enough. */

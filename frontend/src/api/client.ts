@@ -40,6 +40,8 @@ import type {
   StrategySettings,
   TokenResponse,
   SlaForecast,
+  ServiceHealth,
+  SelfHelp,
   AiStatus,
   ChatTurn,
   ReportChatReply,
@@ -148,6 +150,7 @@ export const api = {
   },
 
   catalog: {
+    health: () => get<ServiceHealth[]>('/catalog/health'),
     services: () => get<ServiceView[]>('/catalog/services'),
     categories: () => get<CategoryView[]>('/catalog/categories'),
     previewPriority: (req: { impact: Impact; urgency: Urgency; serviceId: number; affectedUsers: number }) =>
@@ -230,6 +233,8 @@ export const api = {
   ai: {
     status: () => get<AiStatus>('/ai/status'),
     reportChat: (messages: ChatTurn[]) => post<ReportChatReply>('/ai/report-chat', { messages }),
+    selfHelp: (req: { title: string; description: string; serviceId: number | null }) =>
+      post<SelfHelp>('/ai/self-help', req),
   },
   intelligence: {
     analyze: (req: { title: string; description?: string; serviceId?: number | null }) =>

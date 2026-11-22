@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { IncidentListPage } from './pages/IncidentListPage';
 import { LoginPage } from './pages/LoginPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { ServiceMapPage } from './pages/ServiceMapPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -64,6 +65,7 @@ export function App() {
         />
         <Route path="incidents/:id" element={<IncidentDetailPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="services" element={<ServiceMapPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route
           path="reports"

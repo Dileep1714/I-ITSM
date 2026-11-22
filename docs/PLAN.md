@@ -143,6 +143,9 @@ Status as of 8 Nov 2026. Everything ticked is implemented **and** covered by aut
   - [x] Chatbot-based incident reporting: the assistant interviews the employee and fills in the report to review
   - [x] Safe by design: `AiAssistant` Strategy/Adapter + Null Object (works without a key), model fallback list,
         model output validated (ids, enums, citations), every answer labelled as AI-generated
+- [x] Service dependency graph and live status page: `ServiceHealthAnalyzer` propagates impact along dependencies
+      and computes blast radius; Service map page; known issues shown to employees before they report
+- [x] AI self-help before reporting (Gemini): safe steps to try first, without exposing other people's incidents
 - [x] Docker deployment: `backend/Dockerfile`, `frontend/Dockerfile` (nginx), `docker-compose.prod.yml`; see
       `docs/DEPLOYMENT.md` for cloud hosting
 - [x] CI: GitHub Actions runs backend tests on PostgreSQL and lints/builds the frontend

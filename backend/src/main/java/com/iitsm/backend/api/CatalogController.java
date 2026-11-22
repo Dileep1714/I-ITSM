@@ -1,5 +1,6 @@
 package com.iitsm.backend.api;
 
+import com.iitsm.backend.service.ServiceHealthService;
 import com.iitsm.backend.api.dto.CatalogDtos.CategoryView;
 import com.iitsm.backend.api.dto.CatalogDtos.PriorityPreviewRequest;
 import com.iitsm.backend.api.dto.CatalogDtos.ServiceView;
@@ -18,9 +19,17 @@ import java.util.List;
 public class CatalogController {
 
     private final CatalogService catalog;
+    private final ServiceHealthService health;
 
-    public CatalogController(CatalogService catalog) {
+    public CatalogController(CatalogService catalog, ServiceHealthService health) {
         this.catalog = catalog;
+        this.health = health;
+    }
+
+    /** Service map / status page: every service's live health, dependencies and blast radius. */
+    @GetMapping("/api/catalog/health")
+    public List<ServiceHealthService.ServiceHealthView> health() {
+        return health.healthMap();
     }
 
     @GetMapping("/api/catalog/services")

@@ -49,4 +49,19 @@ public final class AiDtos {
     public record ReportDraft(String title, String description, Long serviceId, String serviceName, Long categoryId,
                               String categoryName, Impact impact, Urgency urgency, Integer affectedUsers) {
     }
+
+    public record SelfHelpRequest(@NotBlank @Size(max = 150) String title, @Size(max = 4000) String description,
+                                  Long serviceId) {
+    }
+
+    /**
+     * Help before reporting: a known issue on the chosen service (always), and simple steps to try (when AI is on).
+     *
+     * @param knownIssue set when the service is already known to be in trouble ("IT is aware")
+     * @param canSelfFix whether the steps are likely to fix it without IT
+     * @param pastFixes  how many similar resolved incidents informed the steps
+     */
+    public record SelfHelpView(String knownIssue, String knownIssueHealth, boolean canSelfFix, List<String> steps,
+                               String note, int pastFixes, String model) {
+    }
 }

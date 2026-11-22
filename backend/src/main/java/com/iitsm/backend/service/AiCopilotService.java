@@ -8,6 +8,7 @@ import com.iitsm.backend.api.dto.AiDtos.ChatTurn;
 import com.iitsm.backend.api.dto.AiDtos.ReportChatReply;
 import com.iitsm.backend.api.dto.AiDtos.ReportDraft;
 import com.iitsm.backend.api.dto.AiDtos.ResolutionSuggestion;
+import com.iitsm.backend.api.dto.AiDtos.SelfHelpView;
 import com.iitsm.backend.common.exception.AiUnavailableException;
 import com.iitsm.backend.common.exception.AuthorizationException;
 import com.iitsm.backend.common.exception.NotFoundException;
@@ -67,11 +68,12 @@ public class AiCopilotService {
     private final CurrentUserService currentUser;
     private final ObjectMapper mapper;
     private final Clock clock;
+    private final ServiceHealthService serviceHealth;
     private final RelatedIncidentFinder relatedFinder = new RelatedIncidentFinder();
 
     public AiCopilotService(AiAssistant ai, IncidentRepository incidents, CategoryRepository categories,
                             ItServiceRepository services, CurrentUserService currentUser, ObjectMapper mapper,
-                            Clock clock) {
+                            Clock clock, ServiceHealthService serviceHealth) {
         this.ai = ai;
         this.incidents = incidents;
         this.categories = categories;
@@ -79,6 +81,7 @@ public class AiCopilotService {
         this.currentUser = currentUser;
         this.mapper = mapper;
         this.clock = clock;
+        this.serviceHealth = serviceHealth;
     }
 
     public AiStatus status() {
@@ -164,6 +167,82 @@ public class AiCopilotService {
         List<String> basedOn = strings(json.path("basedOn")).stream().filter(provided::contains).distinct().toList();
         return new ResolutionSuggestion(json.path("summary").asString(""), steps,
                 json.path("likelyCause").asString(""), basedOn, reply.model());
+    }
+
+    // ----- 4. self-help before reporting -----------------------------------------------------------------------
+
+    /**
+     * Help for an employee before they report: whether the chosen service already has a known issue, and (with AI)
+     * a few safe steps to try first, informed by how similar incidents were fixed here. Past incidents only inform
+     * the model; their numbers, titles and people are never shown to the employee.
+     */
+    public SelfHelpView selfHelp(String title, String description, Long serviceId) {
+        currentUser.require();
+        String knownIssue = null;
+        String knownHealth = null;
+        if (serviceId != null) {
+            var health = serviceHealth.healthMap().stream().filter(h -> h.id().equals(serviceId)).findFirst().orElse(null);
+            if (health != null && !"OPERATIONAL".equals(health.health())) {
+                knownHealth = health.health();
+                String state = switch (health.health()) {
+                    case "OUTAGE" -> "down right now";
+                    case "DEGRADED" -> "having problems right now";
+                    case "IMPACTED" -> "affected by a problem with " + String.join(", ", health.impactedBy());
+                    default -> "under maintenance";
+                };
+                knownIssue = health.name() + " is " + state + ". IT already knows and is working on it.";
+            }
+        }
+
+        ItService service = serviceId == null ? null : services.findById(serviceId).orElse(null);
+        String text = description == null ? "" : description;
+        List<Incident> recent = incidents.findByCreatedAtGreaterThanEqualOrderByCreatedAtDesc(
+                clock.instant().minus(LOOKBACK), PageRequest.of(0, 500));
+        List<Incident> fixes = relatedFinder.find(new RelatedIncidentFinder.Probe(null, title, text, service), recent)
+                .stream()
+                .map(RelatedIncidentFinder.Match::incident)
+                .filter(i -> i.getResolution() != null)
+                .limit(MAX_EXAMPLES)
+                .toList();
+
+        if (!ai.available()) {
+            return new SelfHelpView(knownIssue, knownHealth, false, List.of(), null, fixes.size(), null);
+        }
+        StringBuilder context = new StringBuilder("THE EMPLOYEE'S PROBLEM\nTitle: ").append(title).append('\n')
+                .append("Description: ").append(text).append('\n');
+        if (service != null) {
+            context.append("Service: ").append(service.getName()).append('\n');
+        }
+        if (knownIssue != null) {
+            context.append("Known issue: ").append(knownIssue).append('\n');
+        }
+        context.append("\nHOW SIMILAR PROBLEMS WERE FIXED HERE (internal, do not quote or mention):\n");
+        if (fixes.isEmpty()) {
+            context.append("none\n");
+        }
+        fixes.forEach(f -> context.append("- ").append(f.getResolution().getSummary()).append('\n'));
+
+        String instructions = """
+                You help a non-technical employee try a quick fix before they report an IT problem.
+                Give 2 to 4 short, safe steps they can do themselves (restart, reconnect, sign out and in, clear the
+                browser cache, check cables, try another browser). Never suggest anything risky: no registry or
+                system file edits, no disabling antivirus or firewall, no installing unknown software, no sharing
+                passwords. If the fix needs IT (server, database or permission problems) or there is a known issue,
+                set canSelfFix=false, give at most one simple step, and say in the note that they should report it
+                (or wait, for a known issue). Use the past fixes only as background: never mention other people,
+                incident numbers or internal details. Plain words, under 20 words per step.""";
+        JsonNode schema = schema("""
+                {"type":"OBJECT","properties":{"canSelfFix":{"type":"BOOLEAN"},
+                 "steps":{"type":"ARRAY","items":{"type":"STRING"}},"note":{"type":"STRING"}},
+                 "required":["canSelfFix","steps","note"]}""");
+        final String issue = knownIssue;
+        final String issueHealth = knownHealth;
+        return ai.generateJson(instructions, List.of(AiMessage.user(context.toString())), schema)
+                .map(reply -> new SelfHelpView(issue, issueHealth,
+                        reply.json().path("canSelfFix").asBoolean(false),
+                        strings(reply.json().path("steps")).stream().limit(4).toList(),
+                        reply.json().path("note").asString(""), fixes.size(), reply.model()))
+                .orElse(new SelfHelpView(issue, issueHealth, false, List.of(), null, fixes.size(), null));
     }
 
     // ----- 3. chat-based reporting ------------------------------------------------------------------------------

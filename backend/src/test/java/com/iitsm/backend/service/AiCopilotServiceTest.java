@@ -48,6 +48,7 @@ class AiCopilotServiceTest {
     private final ItServiceRepository services = mock(ItServiceRepository.class);
     private final CurrentUserService currentUser = mock(CurrentUserService.class);
     private final Clock clock = Clock.fixed(TestFixtures.T0, ZoneOffset.UTC);
+    private final ServiceHealthService serviceHealth = mock(ServiceHealthService.class);
 
     private AiCopilotService copilot;
 
@@ -64,7 +65,7 @@ class AiCopilotServiceTest {
         when(services.findAllByOrderByName()).thenReturn(List.of(vpn));
         when(currentUser.require()).thenReturn(TestFixtures.employee("Asha Patel"));
         when(ai.available()).thenReturn(true);
-        copilot = new AiCopilotService(ai, incidents, categories, services, currentUser, mapper, clock);
+        copilot = new AiCopilotService(ai, incidents, categories, services, currentUser, mapper, clock, serviceHealth);
     }
 
     private void aiAnswers(String json) {
@@ -155,7 +156,7 @@ class AiCopilotServiceTest {
     @DisplayName("Without an API key: classification quietly falls back, chat reports AI_UNAVAILABLE")
     void disabledAssistantDegradesCleanly() {
         AiCopilotService offline = new AiCopilotService(new DisabledAssistant(), incidents, categories, services,
-                currentUser, mapper, clock);
+                currentUser, mapper, clock, serviceHealth);
 
         assertThat(offline.status().available()).isFalse();
         assertThat(offline.classify("VPN drops", "")).isEmpty();
