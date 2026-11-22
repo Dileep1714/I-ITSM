@@ -1,5 +1,14 @@
 # I-ITSM
 
+**Team (Group 63)**
+
+| Name | ID |
+|---|---|
+| Sai Dileep Yadlapalli | 2025A7PS0116H |
+| Sri Krishna Chaitanya Nallapati | 2025ADPS0219H |
+| Mukpogle Anirudh Reddy | 2025A7PS0077H |
+| Anisetti Pratap Reddy | 2025ADPS0195H |
+
 Intelligent IT Service Management & Incident Resolution System: an object-oriented platform for reporting,
 classifying, prioritizing, assigning, tracking and resolving IT incidents, with SLA monitoring, notifications,
 auditing and intelligent automation.
