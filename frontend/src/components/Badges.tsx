@@ -1,30 +1,31 @@
-import { Badge, Tooltip } from '@mantine/core';
+import { Box, Tooltip } from '@mantine/core';
 import type { IncidentStatus, PriorityLevel, SlaStatus } from '../api/types';
-import { humanize, priorityColor, slaColor, statusColor } from '../lib/format';
+import { humanize } from '../lib/format';
+import classes from './Badges.module.css';
 
 const PRIORITY_LABEL: Record<PriorityLevel, string> = { P1: 'Critical', P2: 'High', P3: 'Medium', P4: 'Low' };
 
 export function StatusBadge({ status }: { status: IncidentStatus }) {
   return (
-    <Badge color={statusColor[status]} variant="light">
+    <span className={classes.status} data-status={status}>
       {humanize(status)}
-    </Badge>
+    </span>
   );
 }
 
 export function PriorityBadge({ priority }: { priority: PriorityLevel | null | undefined }) {
   if (!priority) {
     return (
-      <Badge color="gray" variant="outline">
+      <span className={classes.priority} data-level="unset">
         Unset
-      </Badge>
+      </span>
     );
   }
   return (
     <Tooltip label={PRIORITY_LABEL[priority]}>
-      <Badge color={priorityColor[priority]} variant="filled">
+      <Box component="span" className={classes.priority} data-level={priority} aria-label={`${priority}, ${PRIORITY_LABEL[priority]}`}>
         {priority}
-      </Badge>
+      </Box>
     </Tooltip>
   );
 }
@@ -32,8 +33,8 @@ export function PriorityBadge({ priority }: { priority: PriorityLevel | null | u
 export function SlaBadge({ status }: { status: SlaStatus | null | undefined }) {
   if (!status) return null;
   return (
-    <Badge color={slaColor[status]} variant="dot">
+    <span className={classes.sla} data-sla={status}>
       {humanize(status)}
-    </Badge>
+    </span>
   );
 }

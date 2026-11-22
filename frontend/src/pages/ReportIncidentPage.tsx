@@ -1,4 +1,5 @@
-import { Alert, Anchor, Badge, Button, Card, Grid, Group, NumberInput, Paper, Select, Stack, Text, TextInput, Textarea, Title } from '@mantine/core';
+import { Alert, Anchor, Badge, Button, Card, Grid, Group, NumberInput, Paper, SegmentedControl, Select, SimpleGrid, Stack, Text, TextInput, Textarea, Title } from '@mantine/core';
+import { useState } from 'react';
 import { useForm } from '@mantine/form';
 import { useDebouncedValue } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -9,6 +10,10 @@ import { ApiError, api } from '../api/client';
 import type { Impact, Urgency } from '../api/types';
 import { PriorityBadge, StatusBadge } from '../components/Badges';
 import { errorMessage, humanize } from '../lib/format';
+import classes from './ReportIncidentPage.module.css';
+import { AiReportChat } from '../components/AiCopilot';
+import { useAiAvailable } from '../lib/useAiAvailable';
+import type { ReportDraft } from '../api/types';
 
 const IMPACTS: Impact[] = ['LOW', 'MEDIUM', 'HIGH', 'EXTENSIVE'];
 const URGENCIES: Urgency[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
@@ -99,14 +104,45 @@ export function ReportIncidentPage() {
     },
   });
 
+  const aiAvailable = useAiAvailable();
+  const [mode, setMode] = useState<'form' | 'chat'>('form');
+  /** The assistant's draft fills the form; the employee reviews it and submits it themselves. */
+  const useDraft = (draft: ReportDraft) => {
+    form.setValues({
+      title: draft.title ?? form.values.title,
+      description: draft.description ?? form.values.description,
+      serviceId: draft.serviceId != null ? String(draft.serviceId) : form.values.serviceId,
+      categoryId: draft.categoryId != null ? String(draft.categoryId) : form.values.categoryId,
+      impact: draft.impact,
+      urgency: draft.urgency,
+      affectedUsers: draft.affectedUsers,
+    });
+    setMode('form');
+    notifications.show({ color: 'carbon', message: 'Report filled in from the chat. Check it and press Submit.' });
+  };
+
   const selectedService = services.data?.find((s) => String(s.id) === serviceId);
   const duplicateWarning = report.error instanceof ApiError && report.error.code === 'DUPLICATE_INCIDENT';
 
   return (
     <Stack maw={1100}>
       <Title order={2}>Report an incident</Title>
+      {aiAvailable && (
+        <SegmentedControl
+          value={mode}
+          onChange={(v) => setMode(v as 'form' | 'chat')}
+          data={[
+            { value: 'form', label: 'Fill in the form' },
+            { value: 'chat', label: 'Chat with the assistant' },
+          ]}
+          style={{ alignSelf: 'flex-start' }}
+        />
+      )}
       <Grid>
         <Grid.Col span={{ base: 12, md: 8 }}>
+          {mode === 'chat' && aiAvailable ? (
+            <AiReportChat onUseDraft={useDraft} />
+          ) : (
           <Paper withBorder p="lg" radius="md">
             <form onSubmit={form.onSubmit((values) => report.mutate({ values, allowDuplicate: false }))}>
               <Stack>
@@ -142,9 +178,10 @@ export function ReportIncidentPage() {
                   required
                   {...form.getInputProps('description')}
                 />
-                <Group grow align="flex-start">
+                <SimpleGrid cols={{ base: 1, xs: 2 }} className={classes.fieldRow}>
                   <Select
                     label="Affected service"
+                    description="The system that isn't working"
                     required
                     searchable
                     data={(services.data ?? []).map((s) => ({ value: String(s.id), label: s.name }))}
@@ -172,8 +209,8 @@ export function ReportIncidentPage() {
                       .map((c) => ({ value: String(c.id), label: c.name }))}
                     {...form.getInputProps('categoryId')}
                   />
-                </Group>
-                <Group grow align="flex-start">
+                </SimpleGrid>
+                <SimpleGrid cols={{ base: 1, sm: 3 }} className={classes.fieldRow}>
                   <Select
                     label="Impact"
                     description={IMPACT_HELP[impact]}
@@ -188,8 +225,8 @@ export function ReportIncidentPage() {
                     data={URGENCIES.map((v) => ({ value: v, label: humanize(v) }))}
                     {...form.getInputProps('urgency')}
                   />
-                  <NumberInput label="Users affected" min={1} max={1_000_000} {...form.getInputProps('affectedUsers')} />
-                </Group>
+                  <NumberInput label="Users affected" description="Including you" min={1} max={1_000_000} {...form.getInputProps('affectedUsers')} />
+                </SimpleGrid>
                 <Group justify="flex-end">
                   <Button variant="default" onClick={() => navigate(-1)}>
                     Cancel
@@ -201,6 +238,7 @@ export function ReportIncidentPage() {
               </Stack>
             </form>
           </Paper>
+          )}
         </Grid.Col>
         <Grid.Col span={{ base: 12, md: 4 }}>
           <Stack>

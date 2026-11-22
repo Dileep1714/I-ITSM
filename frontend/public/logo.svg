@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- I-ITSM app icon: the product mark (Tabler "stack-2" glyph) on the brand indigo. Source for all PWA icons. -->
+  <rect width="512" height="512" rx="96" fill="#4263eb"/>
+  <g transform="translate(88 88) scale(14)" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 4l-8 4l8 4l8 -4l-8 -4"/>
+    <path d="M4 12l8 4l8 -4"/>
+    <path d="M4 16l8 4l8 -4"/>
+  </g>
+</svg>

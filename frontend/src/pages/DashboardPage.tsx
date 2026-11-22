@@ -8,17 +8,18 @@ import type { IncidentSearch } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import { IncidentTable } from '../components/IncidentTable';
 import { QueryState } from '../components/QueryState';
+import { LikelyToBreach } from '../components/SlaForecast';
 import { OPEN_STATUSES } from '../lib/format';
 
 function StatCard({ label, value, icon, color, to }: { label: string; value: number | undefined; icon: ReactNode; color: string; to: string }) {
   return (
     <Paper withBorder p="md" radius="md" component={Link} to={to} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <Group justify="space-between">
+      <Group justify="space-between" wrap="nowrap" align="flex-start">
         <div>
-          <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+          <Text size="xs" c="var(--app-ink-carbon)" tt="uppercase" fw={600} ff="var(--label-font)" style={{ letterSpacing: "0.1em" }}>
             {label}
           </Text>
-          <Text fw={700} fz={28}>
+          <Text fw={700} fz={34} ff="monospace" lh={1.15}>
             {value ?? '–'}
           </Text>
         </div>
@@ -92,21 +93,23 @@ export function DashboardPage() {
       </Group>
 
       <SimpleGrid cols={{ base: 2, md: 4 }}>
-        <StatCard label="Open" value={counts.open} color="blue" icon={<IconTicket size={22} stroke={1.6} />} to={link({})} />
-        <StatCard label="High priority (P1/P2)" value={counts.critical} color="orange" icon={<IconFlame size={22} stroke={1.6} />} to={link({ priority: 'P1,P2' })} />
-        <StatCard label="SLA at risk" value={counts.atRisk} color="yellow" icon={<IconClockExclamation size={22} stroke={1.6} />} to={link({ sla: 'AT_RISK' })} />
-        <StatCard label="SLA breached" value={counts.breached} color="red" icon={<IconAlertTriangle size={22} stroke={1.6} />} to={link({ sla: 'BREACHED' })} />
+        <StatCard label="Open" value={counts.open} color="carbon" icon={<IconTicket size={22} stroke={1.6} />} to={link({})} />
+        <StatCard label="High priority (P1/P2)" value={counts.critical} color="carbon" icon={<IconFlame size={22} stroke={1.6} />} to={link({ priority: 'P1,P2' })} />
+        <StatCard label="SLA at risk" value={counts.atRisk} color="carbon" icon={<IconClockExclamation size={22} stroke={1.6} />} to={link({ sla: 'AT_RISK' })} />
+        <StatCard label="SLA breached" value={counts.breached} color="stamp" icon={<IconAlertTriangle size={22} stroke={1.6} />} to={link({ sla: 'BREACHED' })} />
       </SimpleGrid>
+
+      {!isEmployee && <LikelyToBreach />}
 
       {correlations.data?.map((c) => (
         <Paper
           key={c.rootServiceId}
           withBorder
           p="md"
-          style={{ borderLeft: '3px solid var(--mantine-color-orange-6)' }}
+          style={{ borderColor: 'var(--app-stamp)' }}
         >
           <Group gap="xs" mb={4} wrap="nowrap">
-            <IconTopologyStar3 size={18} stroke={1.6} color="var(--mantine-color-orange-6)" />
+            <IconTopologyStar3 size={18} stroke={1.6} color="var(--app-stamp)" />
             <Text fw={600} size="sm">
               Possible common cause: {c.rootServiceName}
             </Text>

@@ -1,0 +1,918 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-22T07:00:46+00:00",
+  "title": "Design System: I-ITSM",
+  "extensions": {
+    "colorMeta": {
+      "carbon-ink": {
+        "role": "primary",
+        "displayName": "Carbon Ink",
+        "canonical": "#262a7a",
+        "tonalRamp": [
+          "#171a4c",
+          "#1f2263",
+          "#262a7a",
+          "#3c41a3",
+          "#5257b8",
+          "#8b8fd3",
+          "#d9daf1",
+          "#eeeefa"
+        ]
+      },
+      "carbon-deep": {
+        "role": "primary",
+        "displayName": "Carbon Deep",
+        "canonical": "#171a4c",
+        "tonalRamp": [
+          "#171a4c",
+          "#1f2263",
+          "#262a7a",
+          "#3c41a3",
+          "#5257b8",
+          "#8b8fd3",
+          "#d9daf1",
+          "#eeeefa"
+        ]
+      },
+      "carbon-press": {
+        "role": "primary",
+        "displayName": "Carbon Press",
+        "canonical": "#1f2263",
+        "tonalRamp": [
+          "#171a4c",
+          "#1f2263",
+          "#262a7a",
+          "#3c41a3",
+          "#5257b8",
+          "#8b8fd3",
+          "#d9daf1",
+          "#eeeefa"
+        ]
+      },
+      "carbon-mid": {
+        "role": "primary",
+        "displayName": "Carbon Mid (dark-mode primary)",
+        "canonical": "#5257b8",
+        "tonalRamp": [
+          "#171a4c",
+          "#1f2263",
+          "#262a7a",
+          "#3c41a3",
+          "#5257b8",
+          "#8b8fd3",
+          "#d9daf1",
+          "#eeeefa"
+        ]
+      },
+      "carbon-dimmed": {
+        "role": "neutral",
+        "displayName": "Carbon Dimmed",
+        "canonical": "#4d4f74",
+        "tonalRamp": [
+          "#171a4c",
+          "#1f2263",
+          "#262a7a",
+          "#3c41a3",
+          "#5257b8",
+          "#8b8fd3",
+          "#d9daf1",
+          "#eeeefa"
+        ]
+      },
+      "carbon-placeholder": {
+        "role": "neutral",
+        "displayName": "Carbon Placeholder",
+        "canonical": "#5f6185",
+        "tonalRamp": [
+          "#171a4c",
+          "#1f2263",
+          "#262a7a",
+          "#3c41a3",
+          "#5257b8",
+          "#8b8fd3",
+          "#d9daf1",
+          "#eeeefa"
+        ]
+      },
+      "carbon-rail-text": {
+        "role": "neutral",
+        "displayName": "Rail Text",
+        "canonical": "#e6e7f6",
+        "tonalRamp": [
+          "#171a4c",
+          "#1f2263",
+          "#262a7a",
+          "#3c41a3",
+          "#5257b8",
+          "#8b8fd3",
+          "#d9daf1",
+          "#eeeefa"
+        ]
+      },
+      "carbon-rail-muted": {
+        "role": "neutral",
+        "displayName": "Rail Muted",
+        "canonical": "#a9acdc",
+        "tonalRamp": [
+          "#171a4c",
+          "#1f2263",
+          "#262a7a",
+          "#3c41a3",
+          "#5257b8",
+          "#8b8fd3",
+          "#d9daf1",
+          "#eeeefa"
+        ]
+      },
+      "carbon-rule": {
+        "role": "neutral",
+        "displayName": "Carbon Rule",
+        "canonical": "rgba(38, 42, 122, 0.5)"
+      },
+      "carbon-rule-faint": {
+        "role": "neutral",
+        "displayName": "Carbon Rule Faint",
+        "canonical": "rgba(38, 42, 122, 0.22)"
+      },
+      "stamp-red": {
+        "role": "secondary",
+        "displayName": "Stamp Red",
+        "canonical": "#c8102e",
+        "tonalRamp": [
+          "#640717",
+          "#850a1e",
+          "#a60d26",
+          "#c8102e",
+          "#df3f55",
+          "#f19aa6",
+          "#f9ccd2",
+          "#fdeaec"
+        ]
+      },
+      "stamp-red-deep": {
+        "role": "secondary",
+        "displayName": "Stamp Red Deep",
+        "canonical": "#a60d26",
+        "tonalRamp": [
+          "#640717",
+          "#850a1e",
+          "#a60d26",
+          "#c8102e",
+          "#df3f55",
+          "#f19aa6",
+          "#f9ccd2",
+          "#fdeaec"
+        ]
+      },
+      "sheet-white": {
+        "role": "neutral",
+        "displayName": "Sheet White",
+        "canonical": "#fefefc",
+        "tonalRamp": [
+          "#16191b",
+          "#1d1e26",
+          "#1d1d22",
+          "#4d4f74",
+          "#a8a9c4",
+          "#e6e7f6",
+          "#eef2f1",
+          "#fefefc"
+        ]
+      },
+      "body-ink": {
+        "role": "neutral",
+        "displayName": "Body Ink",
+        "canonical": "#1d1d22",
+        "tonalRamp": [
+          "#16191b",
+          "#1d1e26",
+          "#1d1d22",
+          "#4d4f74",
+          "#a8a9c4",
+          "#e6e7f6",
+          "#eef2f1",
+          "#fefefc"
+        ]
+      },
+      "accent-employee": {
+        "role": "tertiary",
+        "displayName": "Docket Teal",
+        "canonical": "#0d6463",
+        "tonalRamp": [
+          "#062e2e",
+          "#0a4746",
+          "#0d6463",
+          "#2a8584",
+          "#5fc2bf",
+          "#9fdad8",
+          "#d3eeed",
+          "#eef2f1"
+        ]
+      },
+      "accent-technician": {
+        "role": "tertiary",
+        "displayName": "Docket Plum",
+        "canonical": "#6a2c5b",
+        "tonalRamp": [
+          "#2e1228",
+          "#4a1e40",
+          "#6a2c5b",
+          "#8c4a7c",
+          "#b877a8",
+          "#d995c6",
+          "#efd6e8",
+          "#f2eff1"
+        ]
+      },
+      "accent-administrator": {
+        "role": "tertiary",
+        "displayName": "Docket Bronze",
+        "canonical": "#85561a",
+        "tonalRamp": [
+          "#3a250a",
+          "#5c3c11",
+          "#85561a",
+          "#a5722e",
+          "#c48f45",
+          "#d6a65e",
+          "#efdcbc",
+          "#f3f0ea"
+        ]
+      },
+      "ground-employee": {
+        "role": "neutral",
+        "displayName": "Employee Ground",
+        "canonical": "#eef2f1",
+        "tonalRamp": [
+          "#062e2e",
+          "#0a4746",
+          "#0d6463",
+          "#2a8584",
+          "#5fc2bf",
+          "#9fdad8",
+          "#d3eeed",
+          "#eef2f1"
+        ]
+      },
+      "ground-technician": {
+        "role": "neutral",
+        "displayName": "Technician Ground",
+        "canonical": "#f2eff1",
+        "tonalRamp": [
+          "#2e1228",
+          "#4a1e40",
+          "#6a2c5b",
+          "#8c4a7c",
+          "#b877a8",
+          "#d995c6",
+          "#efd6e8",
+          "#f2eff1"
+        ]
+      },
+      "ground-administrator": {
+        "role": "neutral",
+        "displayName": "Administrator Ground",
+        "canonical": "#f3f0ea",
+        "tonalRamp": [
+          "#3a250a",
+          "#5c3c11",
+          "#85561a",
+          "#a5722e",
+          "#c48f45",
+          "#d6a65e",
+          "#efdcbc",
+          "#f3f0ea"
+        ]
+      },
+      "on-accent": {
+        "role": "neutral",
+        "displayName": "On Accent",
+        "canonical": "#ffffff"
+      },
+      "live-green": {
+        "role": "tertiary",
+        "displayName": "Live Green (connection only)",
+        "canonical": "#157a3e",
+        "tonalRamp": [
+          "#0a3a1d",
+          "#10582d",
+          "#157a3e",
+          "#2a9a57",
+          "#4fd38a",
+          "#8fe3b2",
+          "#c6f0d6",
+          "#e3f3e8"
+        ]
+      },
+      "live-green-tint": {
+        "role": "tertiary",
+        "displayName": "Live Green Tint",
+        "canonical": "#e3f3e8",
+        "tonalRamp": [
+          "#0a3a1d",
+          "#10582d",
+          "#157a3e",
+          "#2a9a57",
+          "#4fd38a",
+          "#8fe3b2",
+          "#c6f0d6",
+          "#e3f3e8"
+        ]
+      },
+      "connecting-amber": {
+        "role": "tertiary",
+        "displayName": "Connecting Amber (connection only)",
+        "canonical": "#8a5a00",
+        "tonalRamp": [
+          "#3d2800",
+          "#5e3e00",
+          "#8a5a00",
+          "#ad7410",
+          "#d6972e",
+          "#f0b955",
+          "#f7dca3",
+          "#fbf1dc"
+        ]
+      },
+      "connecting-amber-tint": {
+        "role": "tertiary",
+        "displayName": "Connecting Amber Tint",
+        "canonical": "#fbf1dc",
+        "tonalRamp": [
+          "#3d2800",
+          "#5e3e00",
+          "#8a5a00",
+          "#ad7410",
+          "#d6972e",
+          "#f0b955",
+          "#f7dca3",
+          "#fbf1dc"
+        ]
+      },
+      "dark-ground-employee": {
+        "role": "neutral",
+        "displayName": "Dark mode Ground Employee",
+        "canonical": "#16191b",
+        "tonalRamp": [
+          "#062e2e",
+          "#0a4746",
+          "#0d6463",
+          "#2a8584",
+          "#5fc2bf",
+          "#9fdad8",
+          "#d3eeed",
+          "#eef2f1"
+        ]
+      },
+      "dark-ground-technician": {
+        "role": "neutral",
+        "displayName": "Dark mode Ground Technician",
+        "canonical": "#1a171a",
+        "tonalRamp": [
+          "#2e1228",
+          "#4a1e40",
+          "#6a2c5b",
+          "#8c4a7c",
+          "#b877a8",
+          "#d995c6",
+          "#efd6e8",
+          "#f2eff1"
+        ]
+      },
+      "dark-ground-administrator": {
+        "role": "neutral",
+        "displayName": "Dark mode Ground Administrator",
+        "canonical": "#1b1916",
+        "tonalRamp": [
+          "#3a250a",
+          "#5c3c11",
+          "#85561a",
+          "#a5722e",
+          "#c48f45",
+          "#d6a65e",
+          "#efdcbc",
+          "#f3f0ea"
+        ]
+      },
+      "dark-sheet": {
+        "role": "neutral",
+        "displayName": "Dark mode Sheet",
+        "canonical": "#1d1e26",
+        "tonalRamp": [
+          "#16191b",
+          "#1d1e26",
+          "#1d1d22",
+          "#4d4f74",
+          "#a8a9c4",
+          "#e6e7f6",
+          "#eef2f1",
+          "#fefefc"
+        ]
+      },
+      "dark-rail": {
+        "role": "neutral",
+        "displayName": "Dark mode Rail",
+        "canonical": "#15173f",
+        "tonalRamp": [
+          "#16191b",
+          "#1d1e26",
+          "#1d1d22",
+          "#4d4f74",
+          "#a8a9c4",
+          "#e6e7f6",
+          "#eef2f1",
+          "#fefefc"
+        ]
+      },
+      "dark-body-ink": {
+        "role": "neutral",
+        "displayName": "Dark mode Body Ink",
+        "canonical": "#ecebf4",
+        "tonalRamp": [
+          "#16191b",
+          "#1d1e26",
+          "#1d1d22",
+          "#4d4f74",
+          "#a8a9c4",
+          "#e6e7f6",
+          "#eef2f1",
+          "#fefefc"
+        ]
+      },
+      "dark-carbon-ink": {
+        "role": "primary",
+        "displayName": "Dark mode Carbon Ink",
+        "canonical": "#b3b6f0",
+        "tonalRamp": [
+          "#171a4c",
+          "#1f2263",
+          "#262a7a",
+          "#3c41a3",
+          "#5257b8",
+          "#8b8fd3",
+          "#d9daf1",
+          "#eeeefa"
+        ]
+      },
+      "dark-dimmed": {
+        "role": "neutral",
+        "displayName": "Dark mode Dimmed",
+        "canonical": "#a8a9c4",
+        "tonalRamp": [
+          "#16191b",
+          "#1d1e26",
+          "#1d1d22",
+          "#4d4f74",
+          "#a8a9c4",
+          "#e6e7f6",
+          "#eef2f1",
+          "#fefefc"
+        ]
+      },
+      "dark-stamp-red": {
+        "role": "secondary",
+        "displayName": "Dark mode Stamp Red",
+        "canonical": "#ff6b7d",
+        "tonalRamp": [
+          "#640717",
+          "#850a1e",
+          "#a60d26",
+          "#c8102e",
+          "#df3f55",
+          "#f19aa6",
+          "#f9ccd2",
+          "#fdeaec"
+        ]
+      },
+      "dark-accent-employee": {
+        "role": "tertiary",
+        "displayName": "Dark mode Accent Employee",
+        "canonical": "#5fc2bf",
+        "tonalRamp": [
+          "#062e2e",
+          "#0a4746",
+          "#0d6463",
+          "#2a8584",
+          "#5fc2bf",
+          "#9fdad8",
+          "#d3eeed",
+          "#eef2f1"
+        ]
+      },
+      "dark-accent-technician": {
+        "role": "tertiary",
+        "displayName": "Dark mode Accent Technician",
+        "canonical": "#d995c6",
+        "tonalRamp": [
+          "#2e1228",
+          "#4a1e40",
+          "#6a2c5b",
+          "#8c4a7c",
+          "#b877a8",
+          "#d995c6",
+          "#efd6e8",
+          "#f2eff1"
+        ]
+      },
+      "dark-accent-administrator": {
+        "role": "tertiary",
+        "displayName": "Dark mode Accent Administrator",
+        "canonical": "#d6a65e",
+        "tonalRamp": [
+          "#3a250a",
+          "#5c3c11",
+          "#85561a",
+          "#a5722e",
+          "#c48f45",
+          "#d6a65e",
+          "#efdcbc",
+          "#f3f0ea"
+        ]
+      },
+      "dark-on-accent": {
+        "role": "tertiary",
+        "displayName": "Dark mode On Accent",
+        "canonical": "#121316",
+        "tonalRamp": [
+          "#16191b",
+          "#1d1e26",
+          "#1d1d22",
+          "#4d4f74",
+          "#a8a9c4",
+          "#e6e7f6",
+          "#eef2f1",
+          "#fefefc"
+        ]
+      },
+      "dark-carbon-rule": {
+        "role": "neutral",
+        "displayName": "Dark mode Carbon Rule",
+        "canonical": "rgba(179, 182, 240, 0.42)"
+      },
+      "dark-carbon-rule-faint": {
+        "role": "neutral",
+        "displayName": "Dark mode Carbon Rule Faint",
+        "canonical": "rgba(179, 182, 240, 0.18)"
+      },
+      "dark-live-green": {
+        "role": "neutral",
+        "displayName": "Dark mode Live Green",
+        "canonical": "#4fd38a",
+        "tonalRamp": [
+          "#0a3a1d",
+          "#10582d",
+          "#157a3e",
+          "#2a9a57",
+          "#4fd38a",
+          "#8fe3b2",
+          "#c6f0d6",
+          "#e3f3e8"
+        ]
+      },
+      "dark-connecting-amber": {
+        "role": "neutral",
+        "displayName": "Dark mode Connecting Amber",
+        "canonical": "#f0b955",
+        "tonalRamp": [
+          "#3d2800",
+          "#5e3e00",
+          "#8a5a00",
+          "#ad7410",
+          "#d6972e",
+          "#f0b955",
+          "#f7dca3",
+          "#fbf1dc"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Profile name; the sign-in statement uses the same voice at 36px."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles (h1)."
+      },
+      "headline-sm": {
+        "displayName": "Headline Sm",
+        "purpose": "Docket titles (h2)."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Section and modal titles (h3)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text."
+      },
+      "body-sm": {
+        "displayName": "Body Sm",
+        "purpose": "Nav items, buttons, notes (max 62ch)."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Input and field labels, role tag, Live chip. Uppercase."
+      },
+      "label-sm": {
+        "displayName": "Label Sm",
+        "purpose": "Table headers, status marks, badges, rail section headings, stamp step names. Uppercase."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Priority stamps and stamp times (Courier Prime)."
+      },
+      "figure-docket": {
+        "displayName": "Figure Docket",
+        "purpose": "The docket number on incident detail."
+      },
+      "figure-count": {
+        "displayName": "Figure Count",
+        "purpose": "Dashboard and profile counts."
+      },
+      "figure-banner": {
+        "displayName": "Figure Banner",
+        "purpose": "Profile name as a figlet Big ASCII banner, scaled to the card width (cols x 0.6em per character, max 18px)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "none",
+        "value": "none",
+        "purpose": "Every Mantine shadow size (xs-xl) is none. Depth is paper (sheet on ground), never light."
+      },
+      {
+        "name": "modal-overlay",
+        "value": "rgba(23, 26, 76, 0.45)",
+        "purpose": "Carbon-deep overlay behind centred modals in place of a shadow."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Stamp press and Live pulse."
+      },
+      {
+        "name": "stamp-press",
+        "value": "140ms ease-out-expo; from rotate(-2.5deg) scale(1.08) opacity 0.6",
+        "purpose": "A current, held or voided lifecycle stamp lands."
+      },
+      {
+        "name": "live-pulse",
+        "value": "2s ease-out-expo infinite; ring scale 1 to 3.2, opacity 0.9 to 0",
+        "purpose": "Live connection dot."
+      },
+      {
+        "name": "live-blink",
+        "value": "1.2s ease-in-out infinite; opacity 0.2 at 50%",
+        "purpose": "Connecting dot."
+      },
+      {
+        "name": "rail-hover",
+        "value": "background-color 120ms ease-out",
+        "purpose": "Rail item hover wash."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: no-preference gate",
+        "purpose": "All animation is gated; reduced motion shows static states."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "xs",
+        "value": "36em"
+      },
+      {
+        "name": "sm",
+        "value": "48em"
+      },
+      {
+        "name": "md",
+        "value": "62em"
+      },
+      {
+        "name": "lg",
+        "value": "75em"
+      },
+      {
+        "name": "xl",
+        "value": "88em"
+      },
+      {
+        "name": "record-card-stack",
+        "value": "40em"
+      }
+    ],
+    "shell": {
+      "railWidth": "232px",
+      "headerHeight": "56px",
+      "headerAccentRule": "3px solid role accent",
+      "contentMaxWidth": "1400px",
+      "pagePadding": {
+        "base": "12px",
+        "sm": "20px"
+      },
+      "roleSelector": "html[data-role=employee|technician|administrator] sets --app-canvas and --app-accent",
+      "schemeSelector": "html[data-mantine-color-scheme=light|dark]"
+    },
+    "focus": {
+      "outline": "2px solid carbon ink (light #262a7a, dark #b3b6f0)",
+      "offset": "2px",
+      "selection": "carbon ink background, sheet-coloured text"
+    },
+    "mantine": {
+      "carbon": [
+        "#eeeefa",
+        "#d9daf1",
+        "#b3b5e3",
+        "#8b8fd3",
+        "#6a6ec4",
+        "#5257b8",
+        "#3c41a3",
+        "#262a7a",
+        "#1f2263",
+        "#171a4c"
+      ],
+      "stamp": [
+        "#fdeaec",
+        "#f9ccd2",
+        "#f19aa6",
+        "#e8687a",
+        "#df3f55",
+        "#d6233c",
+        "#c8102e",
+        "#a60d26",
+        "#850a1e",
+        "#640717"
+      ],
+      "primaryShade": {
+        "light": 7,
+        "dark": 5
+      },
+      "remapped": {
+        "green": "carbon",
+        "teal": "carbon",
+        "orange": "carbon"
+      },
+      "defaultRadius": 0,
+      "fontSizes": {
+        "xs": "0.75rem",
+        "sm": "0.875rem",
+        "md": "0.9375rem",
+        "lg": "1.0625rem",
+        "xl": "1.1875rem"
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Flat square carbon button for primary actions.",
+      "html": "<button class=\"ds-btn-primary\">Take it</button>",
+      "css": ".ds-btn-primary{font:600 14px Archivo,system-ui,sans-serif;height:36px;padding:0 18px;background:#262a7a;color:#fff;border:0;border-radius:0;cursor:pointer;transition:background-color 120ms ease-out}.ds-btn-primary:hover{background:#1f2263}.ds-btn-primary:focus-visible{outline:2px solid #262a7a;outline-offset:2px}.ds-btn-primary:active{background:#171a4c}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action and unselected availability toggle.",
+      "html": "<button class=\"ds-btn-outline\">Busy</button>",
+      "css": ".ds-btn-outline{font:600 14px Archivo,system-ui,sans-serif;height:36px;padding:0 18px;background:transparent;color:#262a7a;border:1px solid #262a7a;border-radius:0;cursor:pointer;transition:background-color 120ms ease-out}.ds-btn-outline:hover{background:#eeeefa}.ds-btn-outline:focus-visible{outline:2px solid #262a7a;outline-offset:2px}"
+    },
+    {
+      "name": "Field Box",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Square ruled input with a tracked narrow-caps label.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Title</span><input class=\"ds-input\" placeholder=\"Laptop will not boot\"></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:4px;max-width:320px}.ds-field-label{font:600 12px 'Archivo Narrow',Archivo,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#262a7a}.ds-input{font:400 15px Archivo,system-ui,sans-serif;height:36px;padding:0 12px;background:#fefefc;color:#1d1d22;border:1px solid rgba(38,42,122,.5);border-radius:0;caret-color:#262a7a}.ds-input::placeholder{color:#5f6185}.ds-input:focus-visible{outline:2px solid #262a7a;outline-offset:2px}"
+    },
+    {
+      "name": "Carbon Rail",
+      "kind": "nav",
+      "refersTo": "nav-rail",
+      "description": "232px carbon nav rail; the active item is a tab in the ground colour.",
+      "html": "<nav class=\"ds-rail\"><div class=\"ds-rail-sec\">Work</div><a class=\"ds-rail-link\" data-active>Incidents</a><a class=\"ds-rail-link\">Report incident</a><a class=\"ds-rail-link\">Profile</a></nav>",
+      "css": ".ds-rail{width:232px;background:#262a7a;padding:8px 0}.ds-rail-sec{padding:16px 18px 6px;font:600 11px 'Archivo Narrow',Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#a9acdc}.ds-rail-link{display:block;padding:9px 18px;font:500 14px Archivo,sans-serif;color:#e6e7f6;cursor:pointer;transition:background-color 120ms ease-out}.ds-rail-link:hover{background:rgba(255,255,255,.08);color:#fff}.ds-rail-link[data-active]{background:#eef2f1;color:#262a7a;font-weight:700}.ds-rail-link:focus-visible{outline:2px solid #fff;outline-offset:-2px}"
+    },
+    {
+      "name": "Top Bar with Role Tag and Live Chip",
+      "kind": "nav",
+      "refersTo": "top-bar",
+      "description": "Ground header with a 3px role-accent rule, filled role tag and green Live chip (technician shown).",
+      "html": "<header class=\"ds-top\"><span class=\"ds-role\">Technician &middot; A. Rao</span><span class=\"ds-live\"><span class=\"ds-dot\"></span>Live</span></header>",
+      "css": ".ds-top{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#f2eff1;border-top:3px solid #6a2c5b;border-bottom:1px solid rgba(38,42,122,.5)}.ds-role{font:600 12px 'Archivo Narrow',Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#fff;background:#6a2c5b;padding:5px 10px}.ds-live{display:inline-flex;align-items:center;gap:8px;padding:4px 10px 4px 9px;font:700 12px 'Archivo Narrow',Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#157a3e;background:#e3f3e8;border:1px solid #157a3e}.ds-dot{position:relative;width:8px;height:8px;border-radius:50%;background:#157a3e}@media (prefers-reduced-motion:no-preference){.ds-dot::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid #157a3e;animation:ds-pulse 2s cubic-bezier(.16,1,.3,1) infinite}}@keyframes ds-pulse{from{transform:scale(1);opacity:.9}to{transform:scale(3.2);opacity:0}}"
+    },
+    {
+      "name": "Priority Stamps",
+      "kind": "chip",
+      "refersTo": "priority-stamp",
+      "description": "P1-P4 magnitude ramp in size and border weight; P1 is a red double rule.",
+      "html": "<span class=\"ds-pri\" data-l=\"P1\">P1</span><span class=\"ds-pri\" data-l=\"P2\">P2</span><span class=\"ds-pri\">P3</span><span class=\"ds-pri\" data-l=\"P4\">P4</span>",
+      "css": ".ds-pri{display:inline-flex;align-items:center;font:700 13px/1 'Courier Prime',monospace;color:#1d1d22;border:1px solid #1d1d22;padding:3px 6px;margin-right:6px}.ds-pri[data-l=P1]{color:#c8102e;border:3px double #c8102e;font-size:15px;padding:2px 6px}.ds-pri[data-l=P2]{border-width:2px;font-size:14px;padding:2px 6px}.ds-pri[data-l=P4]{border-style:dashed;color:#4d4f74;border-color:#4d4f74}"
+    },
+    {
+      "name": "Status and SLA Marks",
+      "kind": "chip",
+      "refersTo": "status-mark",
+      "description": "Ruled status caps (filled when active) and SLA line marks.",
+      "html": "<span class=\"ds-st\">New</span><span class=\"ds-st\" data-on>In progress</span><span class=\"ds-st\" data-hold>On hold</span><span class=\"ds-sla\">On track</span><span class=\"ds-sla\" data-b>Breached</span>",
+      "css": ".ds-st{display:inline-block;font:600 11px/1.3 'Archivo Narrow',Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#262a7a;border:1px solid #262a7a;padding:2px 7px;margin-right:6px}.ds-st[data-on]{background:#262a7a;color:#fefefc}.ds-st[data-hold]{border-style:dashed}.ds-sla{display:inline-flex;align-items:center;gap:7px;font:400 13px Archivo,sans-serif;color:#1d1d22;margin-right:10px}.ds-sla::before{content:'';width:18px;border-top:2px solid #262a7a}.ds-sla[data-b]{color:#c8102e;font-weight:700;text-decoration:line-through;text-decoration-thickness:2px}.ds-sla[data-b]::before{border-top:4px double #c8102e}"
+    },
+    {
+      "name": "Lifecycle Stamp Strip",
+      "kind": "custom",
+      "refersTo": "lifecycle-stamp",
+      "description": "Signature: one tilted rubber stamp per lifecycle step; the current step is pressed in red.",
+      "html": "<ol class=\"ds-strip\"><li class=\"ds-stamp\"><b>New</b><i>09:12</i></li><li class=\"ds-stamp\"><b>Assigned</b><i>09:20</i></li><li class=\"ds-stamp\" data-now><b>In progress</b><i>10:04</i></li><li class=\"ds-stamp\" data-todo><b>Resolved</b></li><li class=\"ds-stamp\" data-todo><b>Closed</b></li></ol>",
+      "css": ".ds-strip{list-style:none;margin:0;padding:4px 2px;display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}.ds-stamp{min-height:56px;border:1.5px solid #262a7a;color:#262a7a;display:grid;place-content:center;text-align:center;gap:2px;padding:6px 4px;transform:rotate(-1.5deg)}.ds-stamp:nth-child(2n){transform:rotate(1.2deg)}.ds-stamp b{font:700 11.5px 'Archivo Narrow',Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase}.ds-stamp i{font:700 13px 'Courier Prime',monospace;font-style:normal}.ds-stamp[data-todo]{border:1px dashed rgba(38,42,122,.5);color:#4d4f74;transform:none}.ds-stamp[data-now]{border:2.5px solid #c8102e;color:#c8102e;transform:rotate(-2.5deg)}@media (prefers-reduced-motion:no-preference){.ds-stamp[data-now]{animation:ds-press 140ms cubic-bezier(.16,1,.3,1)}}@keyframes ds-press{from{transform:rotate(-2.5deg) scale(1.08);opacity:.6}}"
+    },
+    {
+      "name": "Ruled Sheet",
+      "kind": "card",
+      "refersTo": "sheet",
+      "description": "White sheet on the ground with a 1px carbon rule, square and flat; field cells divided by faint rules.",
+      "html": "<div class=\"ds-sheet\"><div class=\"ds-cell\"><span class=\"ds-lab\">Category</span><div class=\"ds-val\">Hardware</div></div><div class=\"ds-cell\"><span class=\"ds-lab\">Assigned to</span><div class=\"ds-val\">A. Rao</div></div></div>",
+      "css": ".ds-sheet{background:#fefefc;border:1px solid rgba(38,42,122,.5);display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));max-width:420px}.ds-cell{padding:12px 20px;border-right:1px solid rgba(38,42,122,.22)}.ds-lab{font:600 11px 'Archivo Narrow',Archivo,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#262a7a}.ds-val{font:500 15px Archivo,sans-serif;color:#1d1d22;margin-top:3px}"
+    },
+    {
+      "name": "ASCII Name Banner",
+      "kind": "custom",
+      "description": "Profile name drawn as a figlet Big banner in Courier Prime 400 carbon; real name visually hidden; non-ASCII names fall back to Archivo 800.",
+      "html": "<div class=\"ds-ascii\"><span class=\"ds-sr\">Ada Lin</span><pre class=\"ds-art\" aria-hidden=\"true\" style=\"--cols:39\">              _         _      _\n     /\\      | |       | |    (_)\n    /  \\   __| | __ _  | |     _ _ __\n   / /\\ \\ / _` |/ _` | | |    | | '_ \\\n  / ____ \\ (_| | (_| | | |____| | | | |\n /_/    \\_\\__,_|\\__,_| |______|_|_| |_|</pre></div>",
+      "css": ".ds-ascii{container-type:inline-size;max-width:420px}.ds-art{margin:0;font-family:'Courier Prime','Courier New',monospace;font-weight:400;font-size:min(18px,calc(100cqw / (var(--cols) * .6)));line-height:1.12;letter-spacing:0;white-space:pre;color:#262a7a;overflow:hidden}.ds-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Service Docket",
+    "overview": "Every incident is a numbered docket from a carbon job book, and every lifecycle step leaves a dated rubber stamp on it. The interface is printed in one ink, carbon blue, on a quiet paper ground. White sheets are ruled in one-pixel carbon, corners are square, and nothing casts a shadow. Docket numbers, times and counts are typed in Courier Prime. Field labels are tracked narrow capitals, as on a pre-printed form. The system turns away from the stock SaaS admin look: default indigo, rounded cards, pill badges and shadowed panels.\n\nThe palette does the explaining. Carbon carries almost everything. Stamp red appears only when something is genuinely wrong (a P1 docket, a breached or at-risk SLA, the current or voided lifecycle stamp). The signed-in role shows as one muted accent: teal for employees, plum for technicians, bronze for administrators. That accent fills the header role tag, the 3px top rule and the avatar box, and the page ground carries only a faint hint of it. Green belongs to the real-time connection chip and nowhere else.\n\nThe density is operational. Tables are ruled straight onto the ground, and the row under the pointer or focus lifts to a white sheet. Urgency is shown in form as well as colour: stamp size, border weight and line style rank priority and SLA state, so meaning never depends on hue alone.",
+    "keyCharacteristics": [
+      "Carbon-blue ink and rail (#262a7a) on a near-neutral role-tinted ground.",
+      "Square corners everywhere (radius 0). Flat colour, no shadows, no gradients.",
+      "One-pixel carbon rules for sheets, tables and field boxes.",
+      "Three type voices: Archivo for the interface, Archivo Narrow tracked caps for labels, Courier Prime for typed figures.",
+      "A mark grammar of solid, double, dashed, dotted and struck lines for priority, status and SLA.",
+      "A lifecycle stamp strip with slight alternating tilts, where the current step is pressed in red."
+    ],
+    "rules": [
+      {
+        "name": "The Four Inks Rule",
+        "body": "Carbon, stamp red, the one active role accent and the Live chip's green are the only hues. The theme remaps Mantine's `green`, `teal` and `orange` to carbon so that defaults cannot add a fifth.",
+        "section": "colors"
+      },
+      {
+        "name": "The Real Alarm Rule",
+        "body": "Stamp red marks only P1, SLA at risk or breached, the current, held or voided lifecycle stamp, and over capacity. A button, link or heading in red is a defect.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Accent Rule",
+        "body": "A screen shows the signed-in role's accent and no other role's accent. The accent identifies who you are. It never encodes priority, status or action.",
+        "section": "colors"
+      },
+      {
+        "name": "The Green Is Connection Rule",
+        "body": "Green means the real-time connection is live. It is never used for success, \"met\" or \"available\".",
+        "section": "colors"
+      },
+      {
+        "name": "The Typed Figure Rule",
+        "body": "Docket numbers, times, priorities, counts and levels are set in Courier Prime. Table cells use tabular numerals.",
+        "section": "typography"
+      },
+      {
+        "name": "The Form Label Rule",
+        "body": "Tracked narrow capitals label a field, column or state that sits directly next to its value. They are never used as a decorative line above a headline.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Paper Rule",
+        "body": "Nothing casts a shadow and nothing uses a gradient. To separate a surface, change the paper (ground to sheet white) or rule it in 1px carbon.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** keep every corner at radius 0 and every shadow at `none`.",
+      "**Do** rule sheets, tables and fields in 1px carbon-rule, and use carbon-rule-faint for internal dividers.",
+      "**Do** encode priority and SLA in line form (size, weight, double, dashed, dotted, struck) as well as colour.",
+      "**Do** set docket numbers, times, priorities and counts in Courier Prime 700 with tabular numerals.",
+      "**Do** derive the role from `html[data-role]` and use only `--app-accent` for the role tag, the 3px top rule, the avatar and the user's own role card.",
+      "**Do** lift the hovered or focused table row to sheet white rather than tinting it.",
+      "**Do** tint secondary text from carbon (#4d4f74 light, #a8a9c4 dark) so it holds AA on every ground.",
+      "**Do** gate every animation behind `prefers-reduced-motion: no-preference`.",
+      "**Do** keep the real text available to assistive technology whenever a figure is drawn decoratively (the ASCII name banner is `aria-hidden` and has a visually hidden name)."
+    ],
+    "donts": [
+      "**Don't** use stamp red for actions, links, headings or decoration. It is for P1, at-risk or breached SLA, and the current, held or voided stamp only.",
+      "**Don't** use green anywhere except the Live connection chip. It never means success, met or available.",
+      "**Don't** show another role's accent, or use a role accent to encode state.",
+      "**Don't** introduce rounded cards, pill badges, shadowed panels, gradients or default Mantine indigo.",
+      "**Don't** let Mantine colour defaults (`red`, `yellow`) render as raw hues. Map them to carbon or stamp.",
+      "**Don't** put tracked narrow capitals above a headline as an eyebrow. Labels sit next to the value they name."
+    ]
+  }
+}

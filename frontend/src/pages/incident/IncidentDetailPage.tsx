@@ -2,6 +2,7 @@ import {
   Alert,
   Anchor,
   Badge,
+  Box,
   Button,
   Card,
   Checkbox,
@@ -46,7 +47,11 @@ import { PriorityBadge, SlaBadge, StatusBadge } from '../../components/Badges';
 import { QueryState } from '../../components/QueryState';
 import { errorMessage, formatDateTime, fromNow, humanize } from '../../lib/format';
 import { ActionModals, type ModalOperation } from './ActionModals';
+import { AttachmentsCard } from './AttachmentsCard';
 import { RelatedIncidents } from './RelatedIncidents';
+import { SlaForecastCard } from '../../components/SlaForecast';
+import { AiFixSuggestion } from '../../components/AiCopilot';
+import { StampStrip } from './StampStrip';
 
 interface ActionButton {
   op: IncidentOperation;
@@ -63,11 +68,11 @@ const ACTIONS: ActionButton[] = [
   { op: 'START_WORK', label: 'Start work', icon: <IconPlayerPlay size={16} /> },
   { op: 'REQUEST_INFO', label: 'Request info', icon: <IconMessageQuestion size={16} />, variant: 'light' },
   { op: 'PROVIDE_INFO', label: 'Provide info', icon: <IconMessageQuestion size={16} /> },
-  { op: 'RESOLVE', label: 'Resolve', icon: <IconTool size={16} />, color: 'teal' },
-  { op: 'ACCEPT_RESOLUTION', label: 'Accept fix', icon: <IconThumbUp size={16} />, color: 'green' },
-  { op: 'REJECT_RESOLUTION', label: 'Still broken', icon: <IconThumbDown size={16} />, color: 'red', variant: 'light' },
-  { op: 'CLOSE', label: 'Close', icon: <IconLock size={16} />, color: 'gray' },
-  { op: 'CANCEL', label: 'Cancel incident', icon: <IconCircleX size={16} />, color: 'red', variant: 'subtle' },
+  { op: 'RESOLVE', label: 'Resolve', icon: <IconTool size={16} /> },
+  { op: 'ACCEPT_RESOLUTION', label: 'Accept fix', icon: <IconThumbUp size={16} /> },
+  { op: 'REJECT_RESOLUTION', label: 'Still broken', icon: <IconThumbDown size={16} />, color: 'stamp', variant: 'light' },
+  { op: 'CLOSE', label: 'Close', icon: <IconLock size={16} />, variant: 'outline' },
+  { op: 'CANCEL', label: 'Cancel incident', icon: <IconCircleX size={16} />, color: 'stamp', variant: 'subtle' },
 ];
 
 const DIRECT: Partial<Record<IncidentOperation, { call: (id: number) => Promise<IncidentDetail>; confirm: string; done: string }>> = {
@@ -78,11 +83,18 @@ const DIRECT: Partial<Record<IncidentOperation, { call: (id: number) => Promise<
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div>
-      <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
+    <div style={{ borderTop: '1px solid var(--app-rule-faint)', paddingTop: 8 }}>
+      <Text
+        size="xs"
+        c="var(--app-ink-carbon)"
+        tt="uppercase"
+        fw={600}
+        ff="var(--label-font)"
+        style={{ letterSpacing: '0.12em' }}
+      >
         {label}
       </Text>
-      <Text size="sm" component="div">
+      <Text size="sm" fw={500} component="div" mt={2}>
         {children}
       </Text>
     </div>
@@ -199,7 +211,7 @@ function IncidentView({
         <Group justify="space-between" align="flex-start">
           <div>
             <Group gap="xs" mb={4}>
-              <Text ff="monospace" c="dimmed">
+              <Text ff="monospace" fw={700} fz={22} c="var(--app-ink-carbon)" lh={1.2}>
                 {i.number}
               </Text>
               <PriorityBadge priority={i.priority?.level} />
@@ -233,6 +245,9 @@ function IncidentView({
             ))}
           </Group>
         )}
+        <Box mt="lg">
+          <StampStrip status={i.status} createdAt={i.createdAt} history={history} />
+        </Box>
       </Paper>
 
       {i.duplicateOfNumber && (
@@ -264,10 +279,10 @@ function IncidentView({
             </Card>
 
             {i.resolution && (
-              <Card withBorder radius="md" style={{ borderColor: 'var(--mantine-color-teal-4)' }}>
+              <Card withBorder radius="md" style={{ borderColor: 'var(--app-ink-carbon)', borderWidth: 2 }}>
                 <Group justify="space-between" mb="xs">
                   <Text fw={600}>Resolution</Text>
-                  <Badge color="teal" variant="light">
+                  <Badge color="carbon" variant="filled">
                     {humanize(i.resolution.code)}
                   </Badge>
                 </Group>
@@ -368,6 +383,11 @@ function IncidentView({
               </SimpleGrid>
             </Card>
 
+            {isStaff && <SlaForecastCard incidentId={i.id} />}
+            {isStaff && !['RESOLVED', 'VERIFIED', 'CLOSED', 'CANCELLED'].includes(i.status) && <AiFixSuggestion incidentId={i.id} />}
+
+            <AttachmentsCard incident={i} />
+
             {isStaff && <RelatedIncidents incident={i} onUpdated={onUpdated} />}
 
             {i.priority && (
@@ -416,7 +436,7 @@ function IncidentView({
                           {slaPercent}% · due {fromNow(sla.resolutionDue)}
                         </Text>
                       </Group>
-                      <Progress value={slaPercent} color={slaPercent >= 100 ? 'red' : slaPercent >= 75 ? 'orange' : 'teal'} />
+                      <Progress value={slaPercent} color={slaPercent >= 75 ? 'stamp' : 'carbon'} radius={0} />
                     </div>
                   )}
                 </Stack>

@@ -1,4 +1,4 @@
-/* Dark, full-height sidebar: the frame of every screen. */
+/* Carbon-blue rail: the frame of every screen. The active item is a tab cut from the reader's copy colour. */
 .navbar {
   background: var(--app-sidebar);
   border-right: none;
@@ -6,61 +6,179 @@
 }
 
 .brand {
-  padding: 18px 16px 14px;
+  padding: 20px 18px 16px;
 }
 
 .section {
-  padding: 14px 16px 6px;
+  padding: 16px 18px 6px;
+  font-family: 'Archivo Narrow', 'Archivo', sans-serif;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--app-sidebar-muted);
 }
 
 .link {
-  margin: 1px 8px;
+  margin: 0;
   width: auto;
-  border-radius: var(--mantine-radius-sm);
-  padding: 7px 10px;
+  border-radius: 0;
+  padding: 9px 18px;
   color: var(--app-sidebar-text);
   font-size: var(--mantine-font-size-sm);
+  transition: background-color 120ms ease-out;
 
   &:hover {
     background: var(--app-sidebar-hover);
     color: #ffffff;
   }
 
-  &[data-active] {
-    background: var(--app-sidebar-active);
-    color: #ffffff;
-    box-shadow: inset 2px 0 0 var(--mantine-primary-color-4);
-  }
-
+  &[data-active],
   &[data-active]:hover {
-    background: var(--app-sidebar-active);
+    background: var(--app-canvas);
+    color: var(--app-ink-carbon);
+
+    & :global(.mantine-NavLink-label) {
+      font-weight: 700;
+    }
   }
 }
 
 .linkIcon {
   color: var(--app-sidebar-muted);
 
-  .link[data-active] &,
   .link:hover & {
     color: #ffffff;
+  }
+
+  .link[data-active] & {
+    color: var(--app-ink-carbon);
   }
 }
 
 .footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 12px 16px;
-  font-size: 11px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 12px 18px;
+  font-family: 'Archivo Narrow', 'Archivo', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   color: var(--app-sidebar-muted);
 }
 
 .header {
-  background: var(--app-surface);
+  background: var(--app-canvas);
+  border-top: 3px solid var(--app-accent);
   border-bottom: 1px solid var(--app-border);
+}
+
+/* The signed-in role, filled in the role's accent. */
+.copyTag {
+  font-family: 'Archivo Narrow', 'Archivo', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--app-on-accent);
+  background: var(--app-accent);
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+
+/*
+ * Real-time connection chip. Live is green (the one place green appears: it is a connection state, not a role or
+ * a priority) with a dot that sends out a ring every two seconds. Connecting is amber and blinks slowly; offline
+ * is grey and struck through. Reduced motion keeps the dots still.
+ */
+.live {
+  --live: #157a3e;
+  --live-tint: #e3f3e8;
+  position: relative;
+  font-family: 'Archivo Narrow', 'Archivo', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 8px;
+  padding: 4px 10px 4px 9px;
+  color: var(--live);
+  background: var(--live-tint);
+  border: 1px solid var(--live);
+
+  &[data-status='connecting'] {
+    --live: #8a5a00;
+    --live-tint: #fbf1dc;
+    border-style: dashed;
+  }
+
+  &[data-status='offline'] {
+    --live: var(--mantine-color-dimmed);
+    --live-tint: transparent;
+    text-decoration: line-through;
+  }
+}
+
+:root[data-mantine-color-scheme='dark'] .live {
+  --live: #4fd38a;
+  --live-tint: rgba(79, 211, 138, 0.12);
+
+  &[data-status='connecting'] {
+    --live: #f0b955;
+    --live-tint: rgba(240, 185, 85, 0.12);
+  }
+
+  &[data-status='offline'] {
+    --live: var(--mantine-color-dimmed);
+    --live-tint: transparent;
+  }
+}
+
+.liveDot {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--live);
+  flex-shrink: 0;
+
+  .live[data-status='offline'] & {
+    background: none;
+    border: 1.5px solid var(--live);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .live[data-status='live'] .liveDot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--live);
+    animation: livePulse 2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  }
+
+  .live[data-status='connecting'] .liveDot {
+    animation: liveBlink 1.2s ease-in-out infinite;
+  }
+}
+
+@keyframes livePulse {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+@keyframes liveBlink {
+  50% {
+    opacity: 0.2;
+  }
 }
 
 .main {
@@ -72,9 +190,17 @@
   margin: 0 auto;
 }
 
+/* Initials box filled with the role accent: the role signal that survives on phones, where the tag is hidden. */
+.avatar :global(.mantine-Avatar-placeholder) {
+  background: var(--app-accent);
+  color: var(--app-on-accent);
+  font-family: 'Archivo Narrow', 'Archivo', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 .userButton {
   padding: 4px 8px;
-  border-radius: var(--mantine-radius-sm);
 
   &:hover {
     background: var(--mantine-color-default-hover);

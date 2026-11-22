@@ -1,0 +1,100 @@
+/* AI copilot in the docket world: carbon ink, ruled sheets, labelled AI output. */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--app-ink-carbon);
+}
+
+.label {
+  display: block;
+  font-family: var(--label-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--app-ink-carbon);
+}
+
+.steps {
+  margin: 12px 0 0;
+  padding-left: 22px;
+  font-size: 14px;
+  line-height: 1.5;
+
+  & li + li {
+    margin-top: 6px;
+  }
+
+  & li::marker {
+    font-family: 'Courier Prime', monospace;
+    font-weight: 700;
+    color: var(--app-ink-carbon);
+  }
+}
+
+.cause {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--app-rule-faint);
+  display: grid;
+  gap: 2px;
+}
+
+.refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ref {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  color: var(--app-ink-carbon);
+}
+
+/* Chat */
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 260px;
+  max-height: 440px;
+  overflow-y: auto;
+  padding: 4px 2px 8px;
+}
+
+.bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+
+  &[data-from='assistant'] {
+    align-self: flex-start;
+  }
+
+  &[data-from='user'] {
+    align-self: flex-end;
+    background: var(--app-ink-carbon);
+    border-color: var(--app-ink-carbon);
+    color: var(--app-surface);
+  }
+}
+
+.draft {
+  margin-top: 8px;
+  padding: 14px;
+  border: 2px solid var(--app-ink-carbon);
+  background: var(--app-surface);
+}
+
+.composer {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-top: 12px;
+}

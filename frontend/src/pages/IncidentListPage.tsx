@@ -1,5 +1,6 @@
 import {
   Button,
+  Collapse,
   Group,
   MultiSelect,
   Pagination,
@@ -12,8 +13,8 @@ import {
   TextInput,
   Title,
 } from '@mantine/core';
-import { useDebouncedValue } from '@mantine/hooks';
-import { IconFilterOff, IconPlus, IconSearch } from '@tabler/icons-react';
+import { useDebouncedValue, useDisclosure, useMediaQuery } from '@mantine/hooks';
+import { IconFilter, IconFilterOff, IconPlus, IconSearch } from '@tabler/icons-react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -94,6 +95,9 @@ export function IncidentListPage() {
   const categories = useQuery({ queryKey: ['categories'], queryFn: api.catalog.categories });
 
   const hasFilters = KEYS.some((k) => k !== 'scope' && params.get(k));
+  const filterCount = KEYS.filter((k) => k !== 'scope' && k !== 'q' && params.get(k)).length;
+  const phone = useMediaQuery('(max-width: 48em)');
+  const [filtersOpen, { toggle: toggleFilters }] = useDisclosure(false);
   const clear = () => {
     setText('');
     setParams(params.get('scope') ? { scope: params.get('scope')! } : {}, { replace: true });
@@ -128,12 +132,26 @@ export function IncidentListPage() {
 
       <Paper withBorder p="md" radius="md">
         <Stack gap="sm">
-          <TextInput
-            placeholder="Search number, title or description"
-            leftSection={<IconSearch size={16} />}
-            value={text}
-            onChange={(e) => setText(e.currentTarget.value)}
-          />
+          <Group gap="xs" wrap="nowrap">
+            <TextInput
+              flex={1}
+              placeholder="Search number, title or description"
+              leftSection={<IconSearch size={16} />}
+              value={text}
+              onChange={(e) => setText(e.currentTarget.value)}
+            />
+            {/* Phones: the eight filters fold away behind one button so incidents show on the first screen. */}
+            <Button
+              hiddenFrom="sm"
+              variant={filterCount ? 'light' : 'default'}
+              leftSection={<IconFilter size={16} />}
+              onClick={toggleFilters}
+              aria-expanded={filtersOpen}
+            >
+              {filterCount ? `Filters (${filterCount})` : 'Filters'}
+            </Button>
+          </Group>
+          <Collapse expanded={!phone || filtersOpen}>
           <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="sm">
             <MultiSelect
               label="Status"
@@ -181,6 +199,7 @@ export function IncidentListPage() {
             <TextInput label="Created from" type="date" value={value('from')} onChange={(e) => update('from', e.currentTarget.value)} />
             <TextInput label="Created to" type="date" value={value('to')} onChange={(e) => update('to', e.currentTarget.value)} />
           </SimpleGrid>
+          </Collapse>
           {hasFilters && (
             <Group justify="flex-end">
               <Button variant="subtle" size="xs" leftSection={<IconFilterOff size={14} />} onClick={clear}>

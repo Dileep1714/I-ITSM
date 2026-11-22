@@ -1,4 +1,4 @@
-import { Box, Group, List, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { Box, Group, Stack, Text, Title } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import classes from './AuthLayout.module.css';
@@ -17,32 +17,28 @@ export function AuthLayout({ title, subtitle, children }: { title: string; subti
     <div className={classes.root}>
       <aside className={classes.panel}>
         <BrandMark inverted size="lg" />
-        <Stack gap="lg" maw={420}>
-          <Title order={1} c="white" fw={600} fz={30} lh={1.2}>
+        <Stack gap="xl" maw={440}>
+          <Title order={1} c="white" fw={800} fz={36} lh={1.12} style={{ letterSpacing: '-0.02em' }}>
             IT service management for the whole organisation.
           </Title>
-          <List
-            spacing="sm"
-            size="sm"
-            c="var(--app-sidebar-text)"
-            icon={
-              <ThemeIcon size={18} radius="xl" variant="light">
-                <IconCheck size={11} stroke={2.5} />
-              </ThemeIcon>
-            }
-          >
+          <ul className={classes.capabilities}>
             {CAPABILITIES.map((c) => (
-              <List.Item key={c}>{c}</List.Item>
+              <li key={c} className={classes.capability}>
+                <span className={classes.tick} aria-hidden="true">
+                  <IconCheck size={12} stroke={3} />
+                </span>
+                {c}
+              </li>
             ))}
-          </List>
+          </ul>
         </Stack>
-        <Text size="xs" c="var(--app-sidebar-muted)">
+        <Text size="xs" ff="var(--label-font)" c="var(--app-sidebar-muted)" style={{ letterSpacing: '0.04em' }}>
           CS F213 · Object-Oriented Programming · 2026–27
         </Text>
       </aside>
 
       <main className={classes.formSide}>
-        <Box w={400} maw="100%">
+        <Box w="100%" maw={400}>
           <Group hiddenFrom="md" mb="xl">
             <BrandMark />
           </Group>

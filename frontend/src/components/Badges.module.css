@@ -1,0 +1,135 @@
+/*
+ * Docket marks. Priority is a typed stamp on a fixed magnitude ramp: P1 is the largest, double-ruled in stamp red;
+ * P2 a heavy carbon box; P3 a single rule; P4 dashed. So priority never depends on colour alone.
+ */
+.priority {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--app-ink);
+  border: 1px solid var(--app-ink);
+  padding: 3px 6px;
+  font-size: 13px;
+  white-space: nowrap;
+
+  &[data-level='P1'] {
+    color: var(--app-stamp);
+    border: 3px double var(--app-stamp);
+    font-size: 15px;
+    padding: 2px 6px;
+  }
+
+  &[data-level='P2'] {
+    border-width: 2px;
+    font-size: 14px;
+    padding: 2px 6px;
+  }
+
+  &[data-level='P4'] {
+    border-style: dashed;
+    color: var(--mantine-color-dimmed);
+    border-color: var(--mantine-color-dimmed);
+  }
+
+  &[data-level='unset'] {
+    border-style: dotted;
+    color: var(--mantine-color-dimmed);
+    border-color: var(--mantine-color-dimmed);
+    font-family: 'Archivo Narrow', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}
+
+/* Lifecycle state: tracked carbon caps in a ruled box. Hold is dashed, cancelled is struck through. */
+.status {
+  display: inline-block;
+  font-family: 'Archivo Narrow', 'Archivo', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  color: var(--app-ink-carbon);
+  border: 1px solid var(--app-ink-carbon);
+  padding: 2px 7px;
+  white-space: nowrap;
+
+  &[data-status='IN_PROGRESS'],
+  &[data-status='ACKNOWLEDGED'] {
+    background: var(--app-ink-carbon);
+    color: var(--app-surface);
+  }
+
+  &[data-status='ON_HOLD'] {
+    border-style: dashed;
+  }
+
+  &[data-status='CLOSED'],
+  &[data-status='VERIFIED'] {
+    color: var(--mantine-color-dimmed);
+    border-color: var(--mantine-color-dimmed);
+  }
+
+  &[data-status='CANCELLED'] {
+    color: var(--mantine-color-dimmed);
+    border-color: var(--mantine-color-dimmed);
+    text-decoration: line-through;
+  }
+}
+
+/* SLA in line form: solid on track, dashed paused, a red rule at risk, struck through when breached. */
+.sla {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  white-space: nowrap;
+  color: var(--app-ink);
+
+  &::before {
+    content: '';
+    width: 18px;
+    border-top: 2px solid var(--app-ink-carbon);
+  }
+
+  &[data-sla='NOT_STARTED'] {
+    color: var(--mantine-color-dimmed);
+
+    &::before {
+      border-top: 2px dotted var(--mantine-color-dimmed);
+    }
+  }
+
+  &[data-sla='PAUSED']::before {
+    border-top-style: dashed;
+  }
+
+  &[data-sla='AT_RISK'] {
+    color: var(--app-stamp);
+    font-weight: 600;
+
+    &::before {
+      border-top-color: var(--app-stamp);
+    }
+  }
+
+  &[data-sla='BREACHED'] {
+    color: var(--app-stamp);
+    font-weight: 700;
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+
+    &::before {
+      border-top: 4px double var(--app-stamp);
+    }
+  }
+
+  &[data-sla='MET'] {
+    color: var(--mantine-color-dimmed);
+  }
+}

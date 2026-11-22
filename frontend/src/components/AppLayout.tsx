@@ -2,7 +2,6 @@ import {
   ActionIcon,
   AppShell,
   Avatar,
-  Badge,
   Burger,
   Group,
   Menu,
@@ -34,9 +33,11 @@ import {
   IconUser,
   IconUsers,
 } from '@tabler/icons-react';
+import { useEffect } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import type { Role } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
+import { InstallButton, OfflineBanner } from '../pwa/PwaControls';
 import { humanize } from '../lib/format';
 import { useLiveStatus } from '../realtime/liveStatus';
 import classes from './AppLayout.module.css';
@@ -104,6 +105,17 @@ export function AppLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
 
+  // The page ground is the reader's carbon copy: app.css keys the copy colour off this attribute.
+  const role = user?.role;
+  useEffect(() => {
+    if (!role) return;
+    const root = document.documentElement;
+    root.dataset.role = role.toLowerCase();
+    return () => {
+      delete root.dataset.role;
+    };
+  }, [role]);
+
   if (!user) return null;
   const sections = NAV.map((section) => ({
     ...section,
@@ -121,22 +133,31 @@ export function AppLayout() {
     <AppShell
       layout="alt"
       header={{ height: 56 }}
-      navbar={{ width: 248, breakpoint: 'sm', collapsed: { mobile: !opened } }}
-      padding="lg"
+      navbar={{ width: 232, breakpoint: 'sm', collapsed: { mobile: !opened } }}
+      padding={{ base: 'sm', sm: 'lg' }}
     >
       <AppShell.Header className={classes.header}>
-        <Group h="100%" px="lg" justify="space-between" wrap="nowrap">
-          <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" aria-label="Toggle navigation" />
-          <span />
+        <Group h="100%" px={{ base: 'sm', sm: 'lg' }} justify="space-between" wrap="nowrap">
+          <Group gap="xs" wrap="nowrap">
+            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" aria-label="Toggle navigation" />
+            {/* On phones the sidebar (and its logo) is hidden, so the header carries the product name. */}
+            <Text component={Link} to="/" hiddenFrom="sm" fw={800} size="md" c="var(--app-ink-carbon)">
+              I-ITSM
+            </Text>
+            <Text component="span" className={classes.copyTag} visibleFrom="sm">
+              {ROLE_LABEL[user.role]} · {user.fullName}
+            </Text>
+          </Group>
           <Group gap={6} wrap="nowrap">
             <LiveIndicator />
+            <InstallButton />
             <ColorSchemeToggle />
             <NotificationBell />
             <Menu position="bottom-end" width={220} withinPortal>
               <Menu.Target>
                 <UnstyledButton className={classes.userButton} aria-label="Account menu">
                   <Group gap={10} wrap="nowrap">
-                    <Avatar radius="sm" size={30} color="gray" variant="light">
+                    <Avatar radius={0} size={30} className={classes.avatar}>
                       {initials(user.fullName)}
                     </Avatar>
                     <div style={{ lineHeight: 1.15 }}>
@@ -196,6 +217,7 @@ export function AppLayout() {
       </AppShell.Navbar>
 
       <AppShell.Main className={classes.main}>
+        <OfflineBanner />
         <div className={classes.content}>
           <Outlet />
         </div>
@@ -230,9 +252,10 @@ function LiveIndicator() {
   const label = status === 'live' ? 'Live' : status === 'connecting' ? 'Connecting' : 'Offline';
   return (
     <Tooltip label={status === 'live' ? 'Real-time updates on' : 'Real-time updates unavailable: data refreshes when you navigate'}>
-      <Badge variant="dot" color={status === 'live' ? 'green' : status === 'connecting' ? 'yellow' : 'gray'} visibleFrom="xs" mr={4}>
+      <Text component="span" className={classes.live} data-status={status} visibleFrom="xs" role="status">
+        <span className={classes.liveDot} aria-hidden="true" />
         {label}
-      </Badge>
+      </Text>
     </Tooltip>
   );
 }

@@ -69,6 +69,10 @@ public class SlaTracker {
     @Column(name = "sla_resolution_breach_recorded", nullable = false)
     private boolean resolutionBreachRecorded;
 
+    // Predictive SLA: an early "breach likely" warning was raised (once per incident).
+    @Column(name = "sla_breach_predicted", nullable = false)
+    private boolean breachPredicted;
+
     public SlaTracker() {
     }
 
@@ -158,7 +162,32 @@ public class SlaTracker {
         resolvedAt = null;
     }
 
+    /** Marks the early breach warning as raised; true only the first time, so it is sent once. */
+    public boolean markBreachPredicted() {
+        if (breachPredicted) {
+            return false;
+        }
+        breachPredicted = true;
+        return true;
+    }
+
     // ----- queries -----------------------------------------------------------------------------------------------
+
+    /** The resolution target, or {@code null} before the SLA starts. */
+    public Duration resolutionTarget() {
+        return resolutionMinutes == null ? null : Duration.ofMinutes(resolutionMinutes);
+    }
+
+    /** Working time spent so far on resolution: from the start to {@code now} (or resolution), pauses excluded. */
+    public Duration activeElapsed(Instant now) {
+        if (!isStarted()) {
+            return Duration.ZERO;
+        }
+        Instant end = resolvedAt != null ? resolvedAt : now;
+        long seconds = Duration.between(startedAt, end).getSeconds() - pausedTotal(end).getSeconds();
+        return Duration.ofSeconds(Math.max(0, seconds));
+    }
+
 
     public boolean isStarted() {
         return startedAt != null;

@@ -1,0 +1,10 @@
+/*
+ * Fields that share a row line up label to label, hint to hint and box to box: every field carries a one-line hint,
+ * and a hint that would wrap is cut to one line with an ellipsis so it never pushes its box below its neighbours'.
+ */
+.fieldRow :global(.mantine-InputWrapper-description) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: 1.4em;
+}

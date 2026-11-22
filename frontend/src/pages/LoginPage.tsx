@@ -1,4 +1,4 @@
-import { Alert, Anchor, Button, Code, Paper, PasswordInput, Stack, Table, Text, TextInput } from '@mantine/core';
+import { Alert, Anchor, Button, Code, Group, Paper, PasswordInput, Stack, Text, TextInput } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -76,28 +76,31 @@ export function LoginPage() {
               Password123
             </Code>
           </Text>
-          <Table verticalSpacing={4} fz="sm" highlightOnHover={false}>
-            <Table.Tbody>
-              {DEMO_ACCOUNTS.map((a) => (
-                <Table.Tr key={a.email}>
-                  <Table.Td c="dimmed" pl={0}>
-                    {a.role}
-                  </Table.Td>
-                  <Table.Td pr={0}>
-                    <Anchor
-                      component="button"
-                      type="button"
-                      size="sm"
-                      ff="monospace"
-                      onClick={() => form.setValues({ email: a.email, password: 'Password123' })}
-                    >
-                      {a.email}
-                    </Anchor>
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
+          {/* Role and email side by side when there is room, stacked on narrow phones. */}
+          <Stack gap={0}>
+            {DEMO_ACCOUNTS.map((a, index) => (
+              <Group
+                key={a.email}
+                justify="space-between"
+                gap={4}
+                py={5}
+                style={index ? { borderTop: '1px solid var(--app-border)' } : undefined}
+              >
+                <Text size="sm" c="dimmed">
+                  {a.role}
+                </Text>
+                <Anchor
+                  component="button"
+                  type="button"
+                  size="sm"
+                  ff="monospace"
+                  onClick={() => form.setValues({ email: a.email, password: 'Password123' })}
+                >
+                  {a.email}
+                </Anchor>
+              </Group>
+            ))}
+          </Stack>
         </Paper>
       )}
     </AuthLayout>

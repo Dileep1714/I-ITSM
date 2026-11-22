@@ -1,28 +1,75 @@
 /*
- * Application surfaces. Pages sit on a tinted canvas; cards and tables are the content surfaces on top of it,
- * separated by hairline borders rather than heavy shadows.
+ * The service docket's surfaces. Cards, tables and forms are white sheets ruled in one-pixel carbon on a quiet
+ * ground. No radius, no shadows, no gradients.
+ *
+ * Each role has one muted accent (AppLayout sets data-role on <html>): deep teal for employees, plum for
+ * technicians, bronze for administrators. The accent marks the header's role tag and top rule; the ground only
+ * carries the faintest hint of it. Red, amber and green stay reserved for priority and SLA state.
  *
  * Mantine marks the active scheme on <html> with data-mantine-color-scheme, so each value is declared once for
  * light and once for dark on that element.
  */
 :root {
-  --app-canvas: #f4f5f7;
-  --app-surface: #ffffff;
-  --app-border: #e3e5e9;
-  --app-table-head: #f8f9fb;
-  --app-sidebar: #111827;
-  --app-sidebar-text: #c9ced8;
-  --app-sidebar-muted: #7b8494;
-  --app-sidebar-hover: rgba(255, 255, 255, 0.06);
-  --app-sidebar-active: rgba(255, 255, 255, 0.1);
+  --label-font: 'Archivo Narrow', 'Archivo', sans-serif;
+  --app-copy-employee: #eef2f1;
+  --app-copy-technician: #f2eff1;
+  --app-copy-administrator: #f3f0ea;
+  --app-accent-employee: #0d6463;
+  --app-accent-technician: #6a2c5b;
+  --app-accent-administrator: #85561a;
+
+  --app-canvas: var(--app-copy-employee);
+  --app-accent: var(--app-accent-employee);
+  --app-on-accent: #ffffff;
+  --app-surface: #fefefc;
+  --app-ink: #1d1d22;
+  --app-ink-carbon: #262a7a;
+  --app-stamp: #c8102e;
+  --app-border: rgba(38, 42, 122, 0.5);
+  --app-rule-faint: rgba(38, 42, 122, 0.22);
+  --app-table-head: transparent;
+  --app-sidebar: #262a7a;
+  --app-sidebar-text: #e6e7f6;
+  --app-sidebar-muted: #a9acdc;
+  --app-sidebar-hover: rgba(255, 255, 255, 0.08);
+}
+
+/*
+ * Secondary text is tinted from the carbon ink, never neutral grey, so it holds 4.5:1 on every ground.
+ * Mantine declares these on the scheme selector, so the override must use the same selector to win.
+ */
+:root[data-mantine-color-scheme='light'] {
+  --mantine-color-dimmed: #4d4f74;
+  --mantine-color-text: #1d1d22;
+  --mantine-color-placeholder: #5f6185;
+}
+
+:root[data-role='technician'] {
+  --app-canvas: var(--app-copy-technician);
+  --app-accent: var(--app-accent-technician);
+}
+
+:root[data-role='administrator'] {
+  --app-canvas: var(--app-copy-administrator);
+  --app-accent: var(--app-accent-administrator);
 }
 
 :root[data-mantine-color-scheme='dark'] {
-  --app-canvas: #121418;
-  --app-surface: #1a1d23;
-  --app-border: #2a2e36;
-  --app-table-head: #20242b;
-  --app-sidebar: #0b0d11;
+  --app-copy-employee: #16191b;
+  --app-copy-technician: #1a171a;
+  --app-copy-administrator: #1b1916;
+  --app-accent-employee: #5fc2bf;
+  --app-accent-technician: #d995c6;
+  --app-accent-administrator: #d6a65e;
+  --app-on-accent: #121316;
+  --app-surface: #1d1e26;
+  --app-ink: #ecebf4;
+  --app-ink-carbon: #b3b6f0;
+  --app-stamp: #ff6b7d;
+  --app-border: rgba(179, 182, 240, 0.42);
+  --app-rule-faint: rgba(179, 182, 240, 0.18);
+  --app-sidebar: #15173f;
+  --mantine-color-dimmed: #a8a9c4;
 }
 
 body {
@@ -30,19 +77,104 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Content surfaces: crisp hairline borders in both modes. */
+/* Browser surfaces carry the docket too. */
+::selection {
+  background: var(--app-ink-carbon);
+  color: var(--app-surface);
+}
+
+:focus-visible {
+  outline: 2px solid var(--app-ink-carbon);
+  outline-offset: 2px;
+}
+
+* {
+  scrollbar-color: var(--app-border) transparent;
+  caret-color: var(--app-ink-carbon);
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
+/* Sheets: white paper ruled in one-pixel carbon. */
 .mantine-Paper-root[data-with-border],
 .mantine-Card-root[data-with-border] {
   border-color: var(--app-border);
   background: var(--app-surface);
 }
 
-/* Numbers in tables line up. */
+/* Typed figures: numbers in tables line up like a numbering machine's. */
 .mantine-Table-td {
   font-variant-numeric: tabular-nums;
 }
 
-/* Table headers get a faint band so long tables scan easily. */
 .mantine-Table-thead {
   background: var(--app-table-head);
+}
+
+/* Tables are ruled straight onto the page ground; the row under the pointer or focus lifts to a white sheet. */
+.mantine-Paper-root[data-with-border]:has(.mantine-Table-table),
+.mantine-Card-root[data-with-border]:has(.mantine-Table-table) {
+  background: transparent;
+}
+
+.mantine-Table-table {
+  --table-hover-color: var(--app-surface);
+}
+
+.mantine-Table-tbody .mantine-Table-tr:focus-within {
+  background: var(--app-surface);
+}
+
+.mantine-Table-thead .mantine-Table-tr {
+  border-top: 1px solid var(--app-border);
+  border-bottom: 1px solid var(--app-border);
+}
+
+.mantine-Table-tbody .mantine-Table-tr {
+  border-bottom-color: var(--app-rule-faint);
+}
+
+/* Inputs are field boxes: square, ruled in carbon. */
+.mantine-Input-input {
+  border-color: var(--app-border);
+}
+
+.mantine-InputWrapper-label {
+  font-family: 'Archivo Narrow', 'Archivo', sans-serif;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-ink-carbon);
+}
+
+/* History reads as a column of dated impressions. */
+.mantine-Timeline-itemBullet {
+  border-radius: 0;
+  border-color: var(--app-ink-carbon);
+}
+
+.mantine-Timeline-itemTitle {
+  font-family: 'Archivo Narrow', 'Archivo', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+  color: var(--app-ink-carbon);
+}
+
+.mantine-Tabs-tab[data-active] {
+  color: var(--app-ink-carbon);
+}
+
+/* Toasts are ruled sheets like everything else: no coloured stripe down one side. */
+.mantine-Notification-root {
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+
+  &::before {
+    display: none;
+  }
 }

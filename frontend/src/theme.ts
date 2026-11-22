@@ -5,8 +5,10 @@ import {
   Button,
   Card,
   createTheme,
+  type MantineColorsTuple,
   Modal,
   NavLink,
+  Notification,
   Paper,
   SegmentedControl,
   Table,
@@ -15,67 +17,99 @@ import {
 } from '@mantine/core';
 
 /**
- * The application's visual system. Every page inherits it, so the look changes here, not page by page.
+ * The application's visual system: the service docket.
  *
- * Direction: restrained enterprise software. Neutral typeface, tight corners, hairline borders instead of shadows,
- * sentence-case labels instead of uppercase pills, quiet table headers. The brand colour is still Mantine's indigo
- * (to be replaced by the project palette).
+ * Every incident is a numbered docket from a carbon triplicate job book. Ink is carbon blue, the page ground is the
+ * reader's copy (white for employees, pink for technicians, canary for administrators; see app.css), rules and
+ * field boxes are one pixel, corners are square, and nothing casts a shadow. Stamp red is reserved for P1 and
+ * breaches. Archivo sets the interface, Archivo Narrow the tracked form labels, Courier Prime the typed figures
+ * (docket numbers, times).
  */
+const carbon: MantineColorsTuple = [
+  '#eeeefa',
+  '#d9daf1',
+  '#b3b5e3',
+  '#8b8fd3',
+  '#6a6ec4',
+  '#5257b8',
+  '#3c41a3',
+  '#262a7a',
+  '#1f2263',
+  '#171a4c',
+];
+
+const stamp: MantineColorsTuple = [
+  '#fdeaec',
+  '#f9ccd2',
+  '#f19aa6',
+  '#e8687a',
+  '#df3f55',
+  '#d6233c',
+  '#c8102e',
+  '#a60d26',
+  '#850a1e',
+  '#640717',
+];
+
+export const LABEL_FONT = '"Archivo Narrow", "Archivo", system-ui, sans-serif';
+
+const labelStyle = {
+  fontFamily: LABEL_FONT,
+  fontWeight: 600,
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.1em',
+};
+
 export const theme = createTheme({
-  primaryColor: 'indigo',
+  // Success and warning hues from Mantine defaults (green toasts, teal/orange buttons) resolve to carbon, so
+  // carbon, stamp red and the role accent stay the only inks.
+  colors: { carbon, stamp, green: carbon, teal: carbon, orange: carbon },
+  primaryColor: 'carbon',
   primaryShade: { light: 7, dark: 5 },
-  defaultRadius: 'sm',
+  defaultRadius: 0,
+  radius: { xs: '0', sm: '0', md: '0', lg: '0', xl: '0' },
   cursorType: 'pointer',
 
-  fontFamily: '"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif',
-  fontFamilyMonospace: '"IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace',
-  fontSizes: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem', lg: '1rem', xl: '1.125rem' },
+  fontFamily: '"Archivo", system-ui, -apple-system, "Segoe UI", sans-serif',
+  fontFamilyMonospace: '"Courier Prime", "Courier New", ui-monospace, monospace',
+  fontSizes: { xs: '0.75rem', sm: '0.875rem', md: '0.9375rem', lg: '1.0625rem', xl: '1.1875rem' },
   lineHeights: { xs: '1.4', sm: '1.45', md: '1.5', lg: '1.5', xl: '1.5' },
   headings: {
-    fontFamily: '"IBM Plex Sans", system-ui, sans-serif',
-    fontWeight: '600',
+    fontFamily: '"Archivo", system-ui, sans-serif',
+    fontWeight: '800',
     sizes: {
-      h1: { fontSize: '1.625rem', lineHeight: '1.25' },
-      h2: { fontSize: '1.375rem', lineHeight: '1.3' },
-      h3: { fontSize: '1.125rem', lineHeight: '1.35' },
-      h4: { fontSize: '1rem', lineHeight: '1.4' },
+      h1: { fontSize: '2rem', lineHeight: '1.15' },
+      h2: { fontSize: '1.5rem', lineHeight: '1.25' },
+      h3: { fontSize: '1.1875rem', lineHeight: '1.3' },
+      h4: { fontSize: '1.0625rem', lineHeight: '1.35' },
     },
   },
-  shadows: {
-    xs: '0 1px 2px rgba(16, 24, 40, 0.04)',
-    sm: '0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04)',
-    md: '0 4px 12px rgba(16, 24, 40, 0.08)',
-  },
+  // Flat paper: no shadows anywhere. Depth comes from the copy tint against white sheets.
+  shadows: { xs: 'none', sm: 'none', md: 'none', lg: 'none', xl: 'none' },
 
   components: {
-    Button: Button.extend({ defaultProps: { size: 'sm' }, styles: { root: { fontWeight: 500 } } }),
+    Button: Button.extend({ defaultProps: { size: 'sm' }, styles: { root: { fontWeight: 600 } } }),
     Badge: Badge.extend({
-      defaultProps: { radius: 'sm', variant: 'light' },
-      styles: { root: { textTransform: 'none', fontWeight: 500, letterSpacing: 0 } },
+      defaultProps: { radius: 0, variant: 'outline' },
+      styles: { root: { ...labelStyle, fontSize: '0.6875rem' } },
     }),
-    Paper: Paper.extend({ defaultProps: { radius: 'md' } }),
-    Card: Card.extend({ defaultProps: { radius: 'md', padding: 'lg' } }),
+    Paper: Paper.extend({ defaultProps: { radius: 0 } }),
+    Card: Card.extend({ defaultProps: { radius: 0, padding: 'lg' } }),
     Modal: Modal.extend({
-      defaultProps: { radius: 'md', centered: true, overlayProps: { backgroundOpacity: 0.4, blur: 2 } },
-      styles: { title: { fontWeight: 600 } },
+      defaultProps: { radius: 0, centered: true, overlayProps: { backgroundOpacity: 0.45, color: '#171a4c' } },
+      styles: { title: { fontWeight: 800, fontSize: '1.1875rem' } },
     }),
-    Alert: Alert.extend({ defaultProps: { variant: 'light', radius: 'sm' } }),
+    Notification: Notification.extend({ defaultProps: { radius: 0 } }),
+    Alert: Alert.extend({ defaultProps: { variant: 'light', radius: 0 } }),
     Anchor: Anchor.extend({ defaultProps: { underline: 'hover' } }),
-    Tooltip: Tooltip.extend({ defaultProps: { withArrow: true, openDelay: 200 } }),
-    Tabs: Tabs.extend({ styles: { tab: { fontWeight: 500 } } }),
-    SegmentedControl: SegmentedControl.extend({ defaultProps: { size: 'sm' } }),
+    Tooltip: Tooltip.extend({ defaultProps: { withArrow: true, openDelay: 200, radius: 0, color: 'carbon.9' } }),
+    Tabs: Tabs.extend({ styles: { tab: { ...labelStyle, fontSize: '0.75rem' } } }),
+    SegmentedControl: SegmentedControl.extend({ defaultProps: { size: 'sm', radius: 0 } }),
     NavLink: NavLink.extend({ styles: { label: { fontWeight: 500 } } }),
     Table: Table.extend({
       defaultProps: { verticalSpacing: 'sm', horizontalSpacing: 'md', highlightOnHover: true },
       styles: {
-        th: {
-          fontSize: 'var(--mantine-font-size-xs)',
-          fontWeight: 600,
-          textTransform: 'uppercase',
-          letterSpacing: '0.04em',
-          color: 'var(--mantine-color-dimmed)',
-          whiteSpace: 'nowrap',
-        },
+        th: { ...labelStyle, fontSize: '0.6875rem', color: 'var(--app-ink-carbon)', whiteSpace: 'nowrap' },
       },
     }),
   },

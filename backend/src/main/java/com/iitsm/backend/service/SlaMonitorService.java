@@ -4,6 +4,8 @@ import com.iitsm.backend.domain.escalation.EscalationChain;
 import com.iitsm.backend.domain.escalation.EscalationHandler;
 import com.iitsm.backend.domain.incident.Incident;
 import com.iitsm.backend.domain.incident.IncidentStatus;
+import com.iitsm.backend.domain.prediction.ResolutionSample;
+import com.iitsm.backend.domain.prediction.RiskLevel;
 import com.iitsm.backend.domain.sla.SlaSignal;
 import com.iitsm.backend.event.IncidentEventPublisher;
 import com.iitsm.backend.repository.IncidentRepository;
@@ -43,22 +45,26 @@ public class SlaMonitorService {
     private final IncidentRouter router;
     private final IncidentEventPublisher events;
     private final TransactionTemplate transactions;
+    private final SlaForecastService forecasts;
     private final EscalationHandler escalationChain = EscalationChain.standard();
 
     public SlaMonitorService(IncidentRepository incidents, IncidentRouter router, IncidentEventPublisher events,
-                             TransactionTemplate transactions) {
+                             TransactionTemplate transactions, SlaForecastService forecasts) {
         this.incidents = incidents;
         this.router = router;
         this.events = events;
         this.transactions = transactions;
+        this.forecasts = forecasts;
     }
 
     public CycleReport runCycle(Instant now) {
         List<Long> ids = incidents.findIdsByStatusIn(MONITORED);
         CycleReport.Builder report = new CycleReport.Builder();
+        // Resolution history for the breach forecast: loaded once per cycle, shared by every incident.
+        List<ResolutionSample> history = transactions.execute(status -> forecasts.history(now));
         for (Long id : ids) {
             try {
-                transactions.executeWithoutResult(status -> process(id, now, report));
+                transactions.executeWithoutResult(status -> process(id, now, report, history));
             } catch (RuntimeException e) {
                 report.failed++;
                 log.warn("SLA monitor could not process incident {}: {}", id, e.getMessage());
@@ -71,7 +77,7 @@ public class SlaMonitorService {
         return result;
     }
 
-    private void process(Long incidentId, Instant now, CycleReport.Builder report) {
+    private void process(Long incidentId, Instant now, CycleReport.Builder report, List<ResolutionSample> history) {
         Incident incident = incidents.findById(incidentId).orElse(null);
         if (incident == null) {
             return;
@@ -91,6 +97,12 @@ public class SlaMonitorService {
                 report.warnings++;
             }
         }
+        // Predictive SLA: warn the assignee and team leads before the deadline is missed (once per incident).
+        forecasts.forecast(incident, history == null ? List.of() : history, now)
+                .filter(forecast -> forecast.risk() == RiskLevel.HIGH)
+                .filter(forecast -> incident.recordPredictedBreach((int) Math.round(forecast.probability() * 100),
+                        String.join("; ", forecast.reasons()), now))
+                .ifPresent(forecast -> report.predicted++);
         if (escalationChain.handle(incident, router, now)) {
             report.escalations++;
         }
@@ -98,15 +110,16 @@ public class SlaMonitorService {
     }
 
     /** What one cycle did. Returned to the admin "run now" endpoint and logged. */
-    public record CycleReport(Instant ranAt, int checked, int warnings, int breaches, int escalations,
-                              int assigned, int autoVerified, int failed) {
+    public record CycleReport(Instant ranAt, int checked, int warnings, int predicted, int breaches,
+                              int escalations, int assigned, int autoVerified, int failed) {
 
         boolean hasActivity() {
-            return warnings + breaches + escalations + assigned + autoVerified + failed > 0;
+            return warnings + predicted + breaches + escalations + assigned + autoVerified + failed > 0;
         }
 
         static final class Builder {
             int warnings;
+            int predicted;
             int breaches;
             int escalations;
             int assigned;
@@ -114,8 +127,8 @@ public class SlaMonitorService {
             int failed;
 
             CycleReport build(int checked, Instant ranAt) {
-                return new CycleReport(ranAt, checked, warnings, breaches, escalations, assigned, autoVerified,
-                        failed);
+                return new CycleReport(ranAt, checked, warnings, predicted, breaches, escalations, assigned,
+                        autoVerified, failed);
             }
         }
     }

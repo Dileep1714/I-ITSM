@@ -4,10 +4,11 @@
   grid-template-columns: minmax(380px, 5fr) 7fr;
 
   @media (max-width: $mantine-breakpoint-md) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
+/* The docket book's carbon cover. */
 .panel {
   background: var(--app-sidebar);
   padding: 40px 48px;
@@ -15,21 +16,47 @@
   flex-direction: column;
   justify-content: space-between;
   gap: 48px;
-  /* Faint grid texture: technical, not decorative. */
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 32px 32px;
 
   @media (max-width: $mantine-breakpoint-md) {
     display: none;
   }
 }
 
+/* Capabilities read as the ruled lines of a form, each with a typed check box. */
+.capabilities {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.capability {
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+  color: var(--app-sidebar-text);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.tick {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  border: 1.5px solid #ffffff;
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+}
+
+/* The form sits on the white copy. */
 .formSide {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
-  background: var(--app-surface);
+  padding: 48px 16px;
+  background: var(--app-copy-employee);
 }

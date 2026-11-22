@@ -72,4 +72,22 @@ public final class ItsmProperties {
             }
         }
     }
+
+    /**
+     * AI copilot (Google Gemini). Without an API key every AI feature is switched off and the app falls back to its
+     * own keyword-based intelligence.
+     *
+     * @param apiKey  Gemini API key from Google AI Studio; keep it in the git-ignored ai.local.properties
+     * @param models  models to try in order: the first that answers wins (later ones cover overload or quota)
+     * @param timeout how long to wait for one model before trying the next
+     */
+    @ConfigurationProperties("iitsm.ai.gemini")
+    public record Gemini(String apiKey,
+                         @DefaultValue({"gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"}) java.util.List<String> models,
+                         @DefaultValue("20s") Duration timeout) {
+
+        public boolean enabled() {
+            return apiKey != null && !apiKey.isBlank();
+        }
+    }
 }

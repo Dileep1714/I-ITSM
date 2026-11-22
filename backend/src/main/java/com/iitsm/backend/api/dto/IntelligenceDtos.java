@@ -55,4 +55,20 @@ public final class IntelligenceDtos {
 
     public record MarkDuplicateRequest(@NotNull Long originalId) {
     }
+
+    /**
+     * Predictive SLA: will this open incident miss its resolution deadline?
+     *
+     * @param probability  0..1 chance of missing the resolution deadline
+     * @param risk         LOW, MEDIUM or HIGH
+     * @param expectedFinish when it will most likely be resolved
+     * @param deadline     the resolution deadline (pauses included)
+     * @param lowConfidence true when few comparable incidents exist and the estimate leans on the SLA target
+     * @param reasons      the factors behind the number, most important first
+     */
+    public record SlaForecastView(Long incidentId, String number, String title, PriorityLevel priority,
+                                  IncidentStatus status, String assigneeName, double probability, String risk,
+                                  Instant expectedFinish, Instant deadline, long expectedRemainingMinutes,
+                                  int sampleSize, boolean lowConfidence, String basis, List<String> reasons) {
+    }
 }

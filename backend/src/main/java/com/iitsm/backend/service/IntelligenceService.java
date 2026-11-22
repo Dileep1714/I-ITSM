@@ -70,6 +70,7 @@ public class IntelligenceService {
     private final CurrentUserService currentUser;
     private final ItsmProperties.Intelligence settings;
     private final Clock clock;
+    private final AiCopilotService ai;
 
     private final CategorySuggester categorySuggester = new CategorySuggester();
     private final RelatedIncidentFinder relatedFinder = new RelatedIncidentFinder();
@@ -77,7 +78,8 @@ public class IntelligenceService {
 
     public IntelligenceService(IncidentRepository incidents, CategoryRepository categories,
                                ItServiceRepository services, IncidentMapper mapper,
-                               CurrentUserService currentUser, ItsmProperties.Intelligence settings, Clock clock) {
+                               CurrentUserService currentUser, ItsmProperties.Intelligence settings, Clock clock,
+                             AiCopilotService ai) {
         this.incidents = incidents;
         this.categories = categories;
         this.services = services;
@@ -85,6 +87,7 @@ public class IntelligenceService {
         this.currentUser = currentUser;
         this.settings = settings;
         this.clock = clock;
+        this.ai = ai;
     }
 
     // ----- use cases exposed through the API --------------------------------------------------------------------
@@ -134,15 +137,20 @@ public class IntelligenceService {
 
     // ----- used by IncidentService while reporting ------------------------------------------------------------
 
-    /** The category to apply automatically, if automatic classification is on and the best guess is confident. */
+    /**
+     * The category to apply automatically, if automatic classification is on and a classifier is confident.
+     * Hybrid: the fast keyword/TF-IDF classifier decides when it is sure; only reports it is unsure about go to
+     * the AI copilot (Gemini). Without AI, or when the AI is unsure, the incident stays unclassified for a person.
+     */
     public Optional<Category> autoCategory(String title, String description) {
         if (!settings.autoClassify()) {
             return Optional.empty();
         }
-        return suggestCategories(title, description).stream()
+        Optional<Category> keyword = suggestCategories(title, description).stream()
                 .findFirst()
                 .filter(best -> best.confidence() >= settings.autoClassifyMinConfidence())
                 .map(CategorySuggester.Suggestion::category);
+        return keyword.isPresent() ? keyword : ai.classify(title, description);
     }
 
     /**

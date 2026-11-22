@@ -1,0 +1,51 @@
+# I-ITSM, the whole system on one machine (a cloud VM or any server with Docker).
+#
+#   1. cp .env.example .env      and fill in the secrets
+#   2. docker compose -f docker-compose.prod.yml up -d --build
+#   3. open http://<server address>/
+#
+# Only the web container is exposed (port 80). The database and the backend are reachable only inside Docker.
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: iitsm
+      POSTGRES_USER: iitsm
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      TZ: UTC
+    volumes:
+      - iitsm-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iitsm -d iitsm"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/iitsm
+      DB_USERNAME: iitsm
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env (32+ random characters)}
+      ALLOWED_ORIGINS: ${PUBLIC_URL:-http://localhost}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      # Optional: enables the AI copilot (Google Gemini free tier).
+      IITSM_AI_GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+
+  web:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  iitsm-pgdata:

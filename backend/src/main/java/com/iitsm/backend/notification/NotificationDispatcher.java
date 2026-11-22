@@ -91,6 +91,14 @@ public class NotificationDispatcher {
                 add(recipients, assignee);
                 addAll(recipients, users.findActiveAdministrators());
             }
+            case SLA_BREACH_PREDICTED -> {
+                // Early warning: the person doing the work and the team leads who can rebalance it.
+                add(recipients, assignee);
+                addAll(recipients, technicians.findBySupportLevelAndActiveTrue(SupportLevel.L2_TEAM_LEAD));
+                if (assignee == null) {
+                    addAll(recipients, users.findActiveAdministrators());
+                }
+            }
             case ESCALATED -> {
                 add(recipients, assignee);
                 SupportLevel level = incident.getEscalationLevel();
@@ -143,6 +151,7 @@ public class NotificationDispatcher {
             case CANCELLED -> "Incident cancelled";
             case SLA_WARNING -> "SLA deadline approaching";
             case SLA_BREACHED -> "SLA breached";
+            case SLA_BREACH_PREDICTED -> "SLA breach likely";
             case ESCALATED -> "Incident escalated";
         };
     }

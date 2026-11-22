@@ -20,6 +20,8 @@ public enum IncidentEventType {
     CLOSED,
     CANCELLED,
     SLA_WARNING,
+    /** The forecast says the resolution deadline will probably be missed (raised before it happens). */
+    SLA_BREACH_PREDICTED,
     SLA_BREACHED,
     ESCALATED
 }

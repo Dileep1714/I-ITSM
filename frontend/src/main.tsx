@@ -13,6 +13,8 @@ import { BrowserRouter } from 'react-router-dom';
 import { ApiError } from './api/client';
 import { App } from './App';
 import { AuthProvider } from './auth/AuthContext';
+import './pwa/installPrompt'; // must load early: catches the browser's one-time "can install" event
+import { UpdatePrompt } from './pwa/PwaControls';
 import { LiveUpdatesProvider } from './realtime/LiveUpdates';
 import { theme } from './theme';
 
@@ -31,6 +33,7 @@ createRoot(document.getElementById('root')!).render(
     <MantineProvider theme={theme} defaultColorScheme="light">
       <ModalsProvider>
         <Notifications position="top-right" />
+        <UpdatePrompt />
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
             <AuthProvider>

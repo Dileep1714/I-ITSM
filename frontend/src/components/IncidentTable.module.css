@@ -1,0 +1,20 @@
+/* Phone layout: incidents as a stack of tappable rows separated by hairlines. */
+.cards {
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  display: block;
+  width: 100%;
+  padding: 12px 8px;
+  border-radius: var(--mantine-radius-sm);
+
+  & + & {
+    border-top: 1px solid var(--app-border);
+  }
+
+  &:active {
+    background: var(--mantine-color-default-hover);
+  }
+}

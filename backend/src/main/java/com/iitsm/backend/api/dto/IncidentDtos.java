@@ -93,6 +93,11 @@ public final class IncidentDtos {
     public record PersonRef(Long id, String fullName, Role role) {
     }
 
+    /** A photo attached to an incident (metadata; the image is at {@code /api/attachments/{id}/content}). */
+    public record AttachmentView(Long id, String fileName, String contentType, long sizeBytes, PersonRef uploadedBy,
+                                 Instant createdAt) {
+    }
+
     public record NamedRef(Long id, String name) {
     }
 

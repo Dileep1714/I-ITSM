@@ -1,0 +1,175 @@
+/* Predictive SLA, in docket marks: the breach chance as a typed figure, HIGH in stamp red, the forecast drawn as a
+   bar against a red deadline tick. */
+.card[data-risk='HIGH'] {
+  border-color: var(--app-stamp);
+  border-width: 2px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--app-ink-carbon);
+}
+
+.figureRow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.figure {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  font-size: 40px;
+  line-height: 1;
+  color: var(--app-ink-carbon);
+
+  .card[data-risk='HIGH'] & {
+    color: var(--app-stamp);
+  }
+}
+
+.risk {
+  font-family: var(--label-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border: 1px solid var(--app-ink-carbon);
+  color: var(--app-ink-carbon);
+
+  &[data-risk='MEDIUM'] {
+    border-width: 2px;
+  }
+
+  &[data-risk='HIGH'] {
+    border: 3px double var(--app-stamp);
+    color: var(--app-stamp);
+  }
+}
+
+.track {
+  position: relative;
+  height: 10px;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+}
+
+.fill {
+  height: 100%;
+  background: var(--app-ink-carbon);
+
+  &[data-late] {
+    background: var(--app-stamp);
+  }
+}
+
+.deadline {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--app-stamp);
+}
+
+.legend {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+
+  & > span {
+    display: grid;
+  }
+}
+
+.label {
+  font-family: var(--label-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--app-ink-carbon);
+}
+
+.time {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.reasons {
+  margin: 14px 0 0;
+  padding: 10px 0 0 18px;
+  border-top: 1px solid var(--app-rule-faint);
+  font-size: 13.5px;
+  line-height: 1.5;
+
+  & li + li {
+    margin-top: 4px;
+  }
+}
+
+/* Dashboard rows */
+.row {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--app-rule-faint);
+  color: inherit;
+  text-decoration: none;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &:hover {
+    background: var(--app-surface);
+  }
+
+  @media (max-width: 48em) {
+    grid-template-columns: auto auto 1fr auto;
+
+    & .rowWhen {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.rowNumber {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  color: var(--app-ink-carbon);
+  white-space: nowrap;
+}
+
+.rowTitle {
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowPct {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--app-ink-carbon);
+
+  &[data-risk='HIGH'] {
+    color: var(--app-stamp);
+  }
+}
+
+.rowWhen {
+  font-size: 13px;
+  color: var(--mantine-color-dimmed);
+  white-space: nowrap;
+}

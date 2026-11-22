@@ -516,6 +516,19 @@ public class Incident {
         return signals;
     }
 
+    /**
+     * Raises the early "breach likely" warning, once per incident, when the forecast says the resolution deadline
+     * will probably be missed. Returns true if it was raised now.
+     */
+    public boolean recordPredictedBreach(int probabilityPercent, String summary, Instant now) {
+        if (status == IncidentStatus.CANCELLED || !sla().isStarted() || !sla().markBreachPredicted()) {
+            return false;
+        }
+        record(IncidentEventType.SLA_BREACH_PREDICTED, status, "Resolution deadline likely to be missed ("
+                + probabilityPercent + "% chance, due " + sla().resolutionDue(now) + "): " + summary, false, now);
+        return true;
+    }
+
     private Instant deadlineFor(SlaSignal signal, Instant now) {
         return signal.target().equals("Response") ? sla().responseDue() : sla().resolutionDue(now);
     }

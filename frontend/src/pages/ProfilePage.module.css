@@ -1,0 +1,333 @@
+/*
+ * The profile is a ruled record card, then the signed-in role marked by its accent colour, and for technicians the escalation ladder, workload slots and skill pips.
+ * Same rules as everywhere: one-pixel carbon, square corners, no shadows, stamp red only for real alarms.
+ */
+.label {
+  font-family: var(--label-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--app-ink-carbon);
+}
+
+.sectionTitle {
+  font-size: 1.1875rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-bottom: 4px;
+}
+
+.sectionNote {
+  font-size: 14px;
+  color: var(--mantine-color-dimmed);
+  margin-bottom: 14px;
+  max-width: 62ch;
+}
+
+/* ---- Record card ---- */
+.card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  display: grid;
+  grid-template-columns: auto 1fr;
+
+  @media (max-width: 40em) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.photo {
+  margin: 20px;
+  width: 132px;
+  height: 152px;
+  border: 3px double var(--app-ink-carbon);
+  display: grid;
+  place-items: center;
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  font-size: 44px;
+  color: var(--app-ink-carbon);
+  background: var(--app-canvas);
+}
+
+.cardBody {
+  border-left: 1px solid var(--app-border);
+  display: grid;
+  grid-template-rows: auto 1fr;
+
+  @media (max-width: 40em) {
+    border-left: 0;
+    border-top: 1px solid var(--app-border);
+  }
+}
+
+.nameRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--app-border);
+}
+
+.name {
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+
+.nameBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.email {
+  font-family: 'Courier Prime', monospace;
+  font-size: 15px;
+  color: var(--app-ink-carbon);
+  margin-top: 6px;
+  word-break: break-all;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.field {
+  padding: 12px 20px;
+  border-right: 1px solid var(--app-rule-faint);
+  border-bottom: 1px solid var(--app-rule-faint);
+  min-width: 0;
+}
+
+.fieldValue {
+  font-size: 15px;
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+/* ---- Role copies ---- */
+.role {
+  position: relative;
+  padding: 18px 18px 20px;
+  border: 1px dashed var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-ink);
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &[data-role='EMPLOYEE'] {
+    --role: var(--app-accent-employee);
+  }
+
+  &[data-role='TECHNICIAN'] {
+    --role: var(--app-accent-technician);
+  }
+
+  &[data-role='ADMINISTRATOR'] {
+    --role: var(--app-accent-administrator);
+  }
+
+  &:not([data-mine]) {
+    color: var(--mantine-color-dimmed);
+  }
+
+  &[data-mine] {
+    border: 2px solid var(--role);
+  }
+}
+
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 10px;
+  background: var(--role);
+  vertical-align: 1px;
+}
+
+.roleName {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--app-ink);
+}
+
+.roleLevel {
+  margin-left: 12px;
+  font-family: 'Courier Prime', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--role);
+}
+
+.roleText {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* ---- Record strip: my incident counts ---- */
+.counts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+}
+
+.count {
+  padding: 14px 20px;
+  border-right: 1px solid var(--app-rule-faint);
+  color: inherit;
+  text-decoration: none;
+
+  &:last-child {
+    border-right: 0;
+  }
+
+  &:hover {
+    background: var(--mantine-color-default-hover);
+  }
+}
+
+.countValue {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1.1;
+  color: var(--app-ink-carbon);
+}
+
+/* ---- Escalation ladder ---- */
+.ladder {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+
+  @media (max-width: 48em) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.rung {
+  position: relative;
+  padding: 14px 16px;
+  border: 1px solid var(--app-border);
+  margin-left: -1px;
+  margin-top: -1px;
+  background: var(--app-surface);
+  min-height: 104px;
+
+  &[data-passed] {
+    background: var(--app-canvas);
+  }
+
+  &[data-current] {
+    background: var(--app-ink-carbon);
+    color: var(--app-surface);
+    border-color: var(--app-ink-carbon);
+    z-index: 1;
+
+    & .label {
+      color: inherit;
+    }
+  }
+}
+
+.rungLevel {
+  font-family: 'Courier Prime', monospace;
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.rungName {
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.rungText {
+  font-size: 13px;
+  margin-top: 2px;
+  opacity: 0.85;
+}
+
+/* ---- Workload slots ---- */
+.slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.slot {
+  width: 44px;
+  height: 56px;
+  border: 1px dashed var(--app-border);
+  background: var(--app-surface);
+
+  &[data-used] {
+    border: 1px solid var(--app-ink-carbon);
+    background: var(--app-ink-carbon);
+  }
+
+  &[data-over] {
+    border: 3px double var(--app-stamp);
+    background: var(--app-surface);
+  }
+}
+
+/* ---- Skill pips ---- */
+.skills {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  border-top: 1px solid var(--app-rule-faint);
+}
+
+.skill {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  margin-right: 24px;
+  border-bottom: 1px solid var(--app-rule-faint);
+}
+
+.pips {
+  display: flex;
+  gap: 4px;
+}
+
+.pip {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--app-ink-carbon);
+
+  &[data-on] {
+    background: var(--app-ink-carbon);
+  }
+}
+
+/* ---- Availability: four plain buttons; the current one is filled with a check ---- */
+.availability {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.availabilityButton {
+  min-width: 140px;
+}
+
+.availabilityStatus {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--mantine-color-dimmed);
+}

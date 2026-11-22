@@ -74,7 +74,7 @@ export function RelatedIncidents({ incident, onUpdated }: { incident: IncidentDe
             </Group>
             {r.resolutionSummary && (
               <Group gap={4} wrap="nowrap" align="flex-start" mt={2}>
-                <IconBulb size={14} color="var(--mantine-color-teal-6)" style={{ flexShrink: 0, marginTop: 2 }} />
+                <IconBulb size={14} color="var(--app-ink-carbon)" style={{ flexShrink: 0, marginTop: 2 }} />
                 <Text size="xs" c="dimmed">
                   <b>Fixed before ({humanize(r.resolutionCode)}):</b> {r.resolutionSummary}
                 </Text>

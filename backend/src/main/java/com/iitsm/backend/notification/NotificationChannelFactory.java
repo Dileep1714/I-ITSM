@@ -31,7 +31,8 @@ public class NotificationChannelFactory {
             IncidentEventType.CREATED, IncidentEventType.ASSIGNED, IncidentEventType.REASSIGNED,
             IncidentEventType.INFO_REQUESTED, IncidentEventType.INFO_PROVIDED, IncidentEventType.RESOLVED,
             IncidentEventType.RESOLUTION_REJECTED, IncidentEventType.CLOSED, IncidentEventType.CANCELLED,
-            IncidentEventType.PRIORITY_CHANGED, IncidentEventType.SLA_WARNING, IncidentEventType.SLA_BREACHED,
+            IncidentEventType.PRIORITY_CHANGED, IncidentEventType.SLA_WARNING, IncidentEventType.SLA_BREACH_PREDICTED,
+            IncidentEventType.SLA_BREACHED,
             IncidentEventType.ESCALATED);
 
     private static final Set<IncidentEventType> ALWAYS_URGENT = EnumSet.of(

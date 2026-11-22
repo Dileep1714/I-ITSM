@@ -1,17 +1,53 @@
-import { Table, Text } from '@mantine/core';
+import { Group, Stack, Table, Text, UnstyledButton } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import type { IncidentSummary } from '../api/types';
 import { fromNow } from '../lib/format';
 import { PriorityBadge, SlaBadge, StatusBadge } from './Badges';
+import classes from './IncidentTable.module.css';
 
+/** Incident list: a full table on tablets and desktops, one tappable card per incident on phones. */
 export function IncidentTable({ incidents, emptyText = 'No incidents' }: { incidents: IncidentSummary[]; emptyText?: string }) {
   const navigate = useNavigate();
+  const phone = useMediaQuery('(max-width: 48em)'); // below Mantine's "sm" breakpoint
 
   if (incidents.length === 0) {
     return (
       <Text c="dimmed" ta="center" py="xl">
         {emptyText}
       </Text>
+    );
+  }
+
+  if (phone) {
+    return (
+      <div className={classes.cards}>
+        {incidents.map((i) => (
+          <UnstyledButton key={i.id} className={classes.card} onClick={() => navigate(`/incidents/${i.id}`)}>
+            <Stack gap={6}>
+              <Group justify="space-between" wrap="nowrap" gap="xs">
+                <Text size="sm" ff="monospace" fw={700} c="var(--app-ink-carbon)">
+                  {i.number}
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {fromNow(i.createdAt)}
+                </Text>
+              </Group>
+              <Text size="sm" fw={600} lineClamp={2}>
+                {i.title}
+              </Text>
+              <Group gap={6}>
+                <PriorityBadge priority={i.priority} />
+                <StatusBadge status={i.status} />
+                <SlaBadge status={i.slaStatus} />
+              </Group>
+              <Text size="xs" c="dimmed" lineClamp={1}>
+                {i.serviceName} · {i.assigneeName ?? 'Unassigned'}
+              </Text>
+            </Stack>
+          </UnstyledButton>
+        ))}
+      </div>
     );
   }
 
@@ -34,7 +70,7 @@ export function IncidentTable({ incidents, emptyText = 'No incidents' }: { incid
           {incidents.map((i) => (
             <Table.Tr key={i.id} style={{ cursor: 'pointer' }} onClick={() => navigate(`/incidents/${i.id}`)}>
               <Table.Td>
-                <Text size="sm" ff="monospace">
+                <Text size="sm" ff="monospace" fw={700} c="var(--app-ink-carbon)" style={{ whiteSpace: 'nowrap' }}>
                   {i.number}
                 </Text>
               </Table.Td>

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.iitsm.backend.domain.user.Employee;
+import com.iitsm.backend.domain.user.Technician;
 import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
@@ -39,6 +40,9 @@ public interface IncidentRepository extends JpaRepository<Incident, Long>, JpaSp
 
     /** A reporter's own incidents in the given statuses, for the "you already reported this" check. */
     List<Incident> findByReporterAndStatusIn(Employee reporter, Collection<IncidentStatus> statuses);
+
+    /** An assignee's open queue (predictive SLA counts what is ahead of an incident). */
+    List<Incident> findByAssigneeAndStatusIn(Technician assignee, Collection<IncidentStatus> statuses);
 
     // ----- reports ------------------------------------------------------------------------------------------------
 

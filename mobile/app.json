@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "I-ITSM",
+    "slug": "iitsm",
+    "scheme": "iitsm",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#eef2f1",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.iitsm.mobile"
+    },
+    "android": {
+      "package": "com.iitsm.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#262a7a",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-secure-store",
+      "expo-font",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "I-ITSM uses Face ID to unlock the app."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "I-ITSM uses the camera to photograph a problem for an incident report.",
+          "photosPermission": "I-ITSM attaches photos you choose to incident reports."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#262a7a"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
+  }
+}

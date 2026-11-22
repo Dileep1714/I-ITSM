@@ -1,4 +1,5 @@
 import type {
+  AttachmentView,
   Availability,
   CategoryAdminView,
   CategoryRequest,
@@ -38,6 +39,11 @@ import type {
   SlaViolationView,
   StrategySettings,
   TokenResponse,
+  SlaForecast,
+  AiStatus,
+  ChatTurn,
+  ReportChatReply,
+  ResolutionSuggestion,
   Urgency,
   UserView,
 } from './types';
@@ -185,14 +191,52 @@ export const api = {
     addNote: (id: number, text: string, internal: boolean) =>
       post<IncidentDetail>(`/incidents/${id}/notes`, { text, internal }),
     similar: (id: number) => get<RelatedIncident[]>(`/incidents/${id}/similar`),
+    /** Undefined when no forecast applies (204): not started, paused, resolved or already late. */
+    slaForecast: (id: number) => get<SlaForecast | undefined>(`/incidents/${id}/sla-forecast`),
+    aiSuggestion: (id: number) => post<ResolutionSuggestion>(`/incidents/${id}/ai-suggestion`),
     markDuplicate: (id: number, originalId: number) =>
       post<IncidentDetail>(`/incidents/${id}/duplicate-of`, { originalId }),
   },
 
+  attachments: {
+    list: (incidentId: number) => get<AttachmentView[]>(`/incidents/${incidentId}/attachments`),
+    upload: async (incidentId: number, file: File): Promise<AttachmentView> => {
+      const form = new FormData();
+      form.append('file', file);
+      const token = tokenStore.get();
+      const response = await fetch(`/api/incidents/${incidentId}/attachments`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      });
+      const body = await response.json().catch(() => undefined);
+      if (!response.ok) {
+        throw new ApiError(body ?? { code: 'HTTP_' + response.status, message: 'Upload failed', status: response.status,
+          path: '/attachments', timestamp: new Date().toISOString(), fieldErrors: [] });
+      }
+      return body as AttachmentView;
+    },
+    /** The image as an object URL (the request needs the auth header, so a plain <img src> cannot load it). */
+    objectUrl: async (attachmentId: number): Promise<string> => {
+      const token = tokenStore.get();
+      const response = await fetch(`/api/attachments/${attachmentId}/content`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error('Could not load the photo');
+      return URL.createObjectURL(await response.blob());
+    },
+  },
+
+  ai: {
+    status: () => get<AiStatus>('/ai/status'),
+    reportChat: (messages: ChatTurn[]) => post<ReportChatReply>('/ai/report-chat', { messages }),
+  },
   intelligence: {
     analyze: (req: { title: string; description?: string; serviceId?: number | null }) =>
       post<DraftAnalysis>('/intelligence/analyze', req),
     correlations: () => get<Correlation[]>('/intelligence/correlations'),
+    slaForecasts: (minRisk: SlaForecast['risk'] = 'MEDIUM') =>
+      get<SlaForecast[]>(`/intelligence/sla-forecasts?minRisk=${minRisk}`),
   },
 
   reports: {

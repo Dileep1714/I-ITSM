@@ -1,5 +1,10 @@
 package com.iitsm.backend.api;
 
+import com.iitsm.backend.api.dto.IntelligenceDtos.SlaForecastView;
+import com.iitsm.backend.domain.prediction.RiskLevel;
+import com.iitsm.backend.service.SlaForecastService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
 import com.iitsm.backend.api.dto.IncidentDtos.IncidentDetail;
 import com.iitsm.backend.api.dto.IntelligenceDtos.CorrelationView;
 import com.iitsm.backend.api.dto.IntelligenceDtos.DraftAnalysis;
@@ -23,10 +28,25 @@ public class IntelligenceController {
 
     private final IntelligenceService intelligence;
     private final IncidentService incidents;
+    private final SlaForecastService forecasts;
 
-    public IntelligenceController(IntelligenceService intelligence, IncidentService incidents) {
+    public IntelligenceController(IntelligenceService intelligence, IncidentService incidents,
+                                  SlaForecastService forecasts) {
         this.intelligence = intelligence;
         this.incidents = incidents;
+        this.forecasts = forecasts;
+    }
+
+    /** Predictive SLA for one incident; 204 when no forecast applies (not started, paused, resolved or late). */
+    @GetMapping("/api/incidents/{id}/sla-forecast")
+    public ResponseEntity<SlaForecastView> slaForecast(@PathVariable Long id) {
+        return forecasts.forecastFor(id).map(ResponseEntity::ok).orElse(ResponseEntity.noContent().build());
+    }
+
+    /** Open incidents likely to miss their resolution deadline, most likely first. Support staff only. */
+    @GetMapping("/api/intelligence/sla-forecasts")
+    public List<SlaForecastView> slaForecasts(@RequestParam(defaultValue = "MEDIUM") RiskLevel minRisk) {
+        return forecasts.atRisk(minRisk);
     }
 
     /** Analyse the report form as the user types (nothing is saved). */

@@ -133,9 +133,29 @@ Status as of 8 Nov 2026. Everything ticked is implemented **and** covered by aut
 - [x] Automated incident escalation
 - [x] Incident similarity detection and root-cause correlation
 - [x] Analytics & visualization (charts on the Reports page)
-- [ ] Docker / cloud deployment (today: Docker Compose for PostgreSQL only; app containers not yet)
+- [x] Predictive SLA violation detection: forecasts each open incident's breach probability from past resolution
+      times (category/priority back-off, technician speed, queue ahead, conditional on time already spent), shows
+      "SLA forecast" on the incident and "Likely to breach" on the dashboard, and warns the assignee and team leads
+      before the deadline (`SLA_BREACH_PREDICTED`, once per incident). `domain/prediction`, Strategy `BreachPredictor`
+- [x] AI copilot (Google Gemini API, free tier; third-party API integration):
+  - [x] AI-assisted classification: keyword/TF-IDF first, Gemini only when unsure (hybrid)
+  - [x] AI-based resolution recommendation: fix steps grounded in similar resolved incidents, with citations
+  - [x] Chatbot-based incident reporting: the assistant interviews the employee and fills in the report to review
+  - [x] Safe by design: `AiAssistant` Strategy/Adapter + Null Object (works without a key), model fallback list,
+        model output validated (ids, enums, citations), every answer labelled as AI-generated
+- [x] Docker deployment: `backend/Dockerfile`, `frontend/Dockerfile` (nginx), `docker-compose.prod.yml`; see
+      `docs/DEPLOYMENT.md` for cloud hosting
 - [x] CI: GitHub Actions runs backend tests on PostgreSQL and lints/builds the frontend
-- [ ] Stretch: PWA + push notifications
+- [x] PWA: installable (manifest, icons, home-screen shortcuts), Workbox service worker precaching the app shell,
+      "new version available" prompt, offline banner, iOS Add-to-Home-Screen guide
+- [ ] Web push notifications (PWA)
+- [x] Mobile app: React Native / Expo (Android + iOS), in `mobile/`
+  - [x] Role-specific: employee (my incidents + Report button), technician (queue, swipe for next step),
+        administrator (operations overview, team workload, SLA violations, activity log)
+  - [x] Native UI: platform tab bar, native headers and search, Material 3 design, swipe actions, action sheets
+  - [x] Device features: fingerprint/face unlock, system notifications, camera photos on incidents, haptics
+- [x] Photo attachments on incidents (backend API + web + mobile), image type checked from the file bytes
+- [ ] Mobile: tested on a real device; APK build via EAS
 
 ---
 
