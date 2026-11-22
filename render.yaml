@@ -1,0 +1,36 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> pick this repository. Creates everything below.
+# One free web service (API + WebSocket + web app) and one free PostgreSQL database, in Singapore.
+services:
+  - type: web
+    name: iitsm
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./render/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: iitsm-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SEED_DEMO_DATA
+        value: "true"
+      # The site's own address, so the WebSocket accepts it (Render sets RENDER_EXTERNAL_URL).
+      - key: ALLOWED_ORIGINS
+        fromService:
+          type: web
+          name: iitsm
+          envVarKey: RENDER_EXTERNAL_URL
+      # Optional: your free Gemini key (enables the AI copilot). Render asks for it when you create the Blueprint.
+      - key: IITSM_AI_GEMINI_API_KEY
+        sync: false
+
+databases:
+  - name: iitsm-db
+    plan: free
+    region: singapore
+    databaseName: iitsm
+    user: iitsm

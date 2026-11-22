@@ -1,0 +1,9 @@
+# Used by render/Dockerfile (build context = repository root).
+**/node_modules
+mobile
+frontend/dist
+backend/target
+backend/ai.local.properties
+.impeccable
+.git
+**/.env

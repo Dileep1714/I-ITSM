@@ -54,12 +54,29 @@ works), then put Caddy in front, which obtains and renews certificates automatic
 port to `8080:80`, run Caddy with `reverse_proxy localhost:8080` for your domain, open port 443, and set
 `PUBLIC_URL=https://your-domain`.
 
-## Option B: platform services (no server to manage)
+## Option B: Render (free, no server to manage)
 
-On **Render** (or similar): create a PostgreSQL database, a **Web Service** from `backend/Dockerfile` with the same
-environment variables as in `docker-compose.prod.yml`, and a second Web Service from `frontend/Dockerfile` with
-`backend` in `nginx.conf` replaced by the backend's address. Free plans there usually sleep when idle (the first
-request then takes about a minute) and free databases may expire, so Option A is more reliable for a demo.
+`render.yaml` in the repository root is a Render **Blueprint**: Render reads it and creates everything.
+On the free plan, Render services cannot talk to each other privately, so I-ITSM runs as **one service**:
+`render/Dockerfile` builds the React app and bundles it into the Spring Boot jar, which then serves the website,
+the API and the WebSocket from one address, next to a free PostgreSQL database.
+
+1. Push the code to GitHub (the branch you want to deploy, e.g. `main`).
+2. Sign up at **render.com** with your GitHub account.
+3. **New -> Blueprint**, choose the I-ITSM repository and branch. Render shows the plan: a web service `iitsm`
+   and a database `iitsm-db` (both Free, region Singapore).
+4. When asked for **IITSM_AI_GEMINI_API_KEY**, paste your Gemini key (or leave it empty to run without AI).
+   The JWT secret is generated automatically; the database connection is wired automatically.
+5. **Apply**. The first build takes about 10 minutes. Then open the address Render shows
+   (`https://iitsm-xxxx.onrender.com`) and sign in with a demo account (password `Password123`).
+
+Free-plan behaviour to know before a demo:
+- The service **sleeps after 15 minutes** without visitors; the next visit wakes it in about a minute. Open the
+  site a couple of minutes before presenting.
+- It has 512 MB of memory and a small CPU share, so the first start after waking is slow; afterwards it is fine.
+- The **free database expires 30 days after creation** (Render keeps it 14 more days before deleting it). For a
+  longer life, upgrade the database or recreate it.
+- Updates: every push to the deployed branch redeploys automatically.
 
 ## The mobile app against the deployed server
 
@@ -67,7 +84,8 @@ Build the APK with the server address baked in; it then works on any network:
 
 ```bash
 cd mobile
-EXPO_PUBLIC_API_URL=http://<VM public IP or https://your-domain> npx eas-cli build -p android --profile preview
+EXPO_PUBLIC_API_URL=https://iitsm-xxxx.onrender.com npx eas-cli build -p android --profile preview
+# (or http://<VM public IP> for Option A)
 ```
 
 ## Security checklist

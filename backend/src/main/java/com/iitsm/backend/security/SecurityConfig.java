@@ -67,6 +67,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/reports/**", "/api/intelligence/correlations")
                             .hasAnyRole("TECHNICIAN", "ADMINISTRATOR")
                         .requestMatchers("/api/**").authenticated()
+                        // The bundled web app (single-service deployment): its pages and assets hold no data, so
+                        // they are public; every API call they make is still authenticated above.
+                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
                         .anyRequest().denyAll())
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
